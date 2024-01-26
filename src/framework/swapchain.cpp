@@ -34,7 +34,7 @@ namespace LIB_NAMESPACE
 			imageCount = createInfo.supportDetails.capabilities.maxImageCount;
 		}
 
-		ft::core::Swapchain::CreateInfo swapchainInfo = {};
+		vk::core::Swapchain::CreateInfo swapchainInfo = {};
 		swapchainInfo.surface = createInfo.surface;
 		swapchainInfo.minImageCount = imageCount;
 		swapchainInfo.imageFormat = surfaceFormat.format;
@@ -68,7 +68,7 @@ namespace LIB_NAMESPACE
 
 		swapchainInfo.oldSwapchain = createInfo.oldSwapchain;
 
-		swapchain = std::make_unique<ft::core::Swapchain>(device, swapchainInfo);
+		swapchain = std::make_unique<vk::core::Swapchain>(device, swapchainInfo);
 	}
 
 	void Swapchain::createImageViews(VkDevice device)
@@ -77,7 +77,7 @@ namespace LIB_NAMESPACE
 
 		for (size_t i = 0; i < swapchain->getImageCount(); i++)
 		{
-			ft::core::ImageView::CreateInfo imageViewInfo = {};
+			vk::core::ImageView::CreateInfo imageViewInfo = {};
 			imageViewInfo.image = swapchain->getImage(i);
 			imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			imageViewInfo.format = swapchain->getImageFormat();
@@ -91,7 +91,7 @@ namespace LIB_NAMESPACE
 			imageViewInfo.subresourceRange.baseArrayLayer = 0;
 			imageViewInfo.subresourceRange.layerCount = 1;
 
-			imageViews[i] = std::make_unique<ft::core::ImageView>(device, imageViewInfo);
+			imageViews[i] = std::make_unique<vk::core::ImageView>(device, imageViewInfo);
 		}
 	}
 

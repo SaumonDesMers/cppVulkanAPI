@@ -30,8 +30,8 @@ namespace LIB_NAMESPACE
 			VkSwapchainKHR oldSwapchain;
 		};
 
-		std::unique_ptr<ft::core::Swapchain> swapchain;
-		std::vector<std::unique_ptr<ft::core::ImageView>> imageViews;
+		std::unique_ptr<vk::core::Swapchain> swapchain;
+		std::vector<std::unique_ptr<vk::core::ImageView>> imageViews;
 
 		Swapchain(VkDevice device, const CreateInfo& createInfo);
 		~Swapchain();

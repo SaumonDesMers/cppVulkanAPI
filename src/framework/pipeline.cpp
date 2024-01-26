@@ -17,8 +17,8 @@ namespace LIB_NAMESPACE
 
 	void Pipeline::createPipeline(VkDevice device, const CreateInfo& createInfo)
 	{
-		ft::core::ShaderModule vertShaderModule(device, createInfo.vertexShaderPath);
-		ft::core::ShaderModule fragShaderModule(device, createInfo.fragmentShaderPath);
+		vk::core::ShaderModule vertShaderModule(device, createInfo.vertexShaderPath);
+		vk::core::ShaderModule fragShaderModule(device, createInfo.fragmentShaderPath);
 
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -113,10 +113,10 @@ namespace LIB_NAMESPACE
 		pipelineLayoutInfo.pPushConstantRanges = createInfo.pushConstantRanges.data();
 
 
-		layout = std::make_unique<ft::core::PipelineLayout>(device, pipelineLayoutInfo);
+		layout = std::make_unique<vk::core::PipelineLayout>(device, pipelineLayoutInfo);
 
 
-		ft::core::Pipeline::CreateInfo pipelineInfo = {};
+		vk::core::Pipeline::CreateInfo pipelineInfo = {};
 		pipelineInfo.stageCount = 2;
 		pipelineInfo.pStages = shaderStages;
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -132,6 +132,6 @@ namespace LIB_NAMESPACE
 		pipelineInfo.subpass = 0;
 		pipelineInfo.pNext = createInfo.pNext;
 
-		pipeline = std::make_unique<ft::core::Pipeline>(device, pipelineInfo);
+		pipeline = std::make_unique<vk::core::Pipeline>(device, pipelineInfo);
 	}
 }

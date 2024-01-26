@@ -41,12 +41,12 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createDevice()
 	{
-		m_device = std::make_unique<ft::Device>();
+		m_device = std::make_unique<vk::Device>();
 	}
 
 	void RenderAPI::createSwapchain()
 	{
-		ft::Swapchain::CreateInfo swapchainInfo = {};
+		vk::Swapchain::CreateInfo swapchainInfo = {};
 		swapchainInfo.surface = m_device->surface->getVk();
 		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice->getVk());
 		
@@ -58,7 +58,7 @@ namespace LIB_NAMESPACE
 
 		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		m_swapchain = std::make_unique<ft::Swapchain>(m_device->device->getVk(), swapchainInfo);
+		m_swapchain = std::make_unique<vk::Swapchain>(m_device->device->getVk(), swapchainInfo);
 	}
 
 	void RenderAPI::recreateSwapChain()
@@ -86,14 +86,14 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createCommandPool()
 	{
-		ft::Queue::FamilyIndices queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice->getVk());
+		vk::Queue::FamilyIndices queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice->getVk());
 
-		ft::Command::CreateInfo commandInfo{};
+		vk::Command::CreateInfo commandInfo{};
 		commandInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 		commandInfo.queue = m_device->graphicsQueue->getVk();
 		commandInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		m_command = std::make_unique<ft::Command>(m_device->device->getVk(), commandInfo);
+		m_command = std::make_unique<vk::Command>(m_device->device->getVk(), commandInfo);
 
 
 		m_vkCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -105,7 +105,7 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createColorResources()
 	{
-		m_colorImage = std::make_unique<ft::Image>(ft::Image::createColorImage(
+		m_colorImage = std::make_unique<vk::Image>(vk::Image::createColorImage(
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
 			m_swapchain->swapchain->getExtent(),
@@ -119,7 +119,7 @@ namespace LIB_NAMESPACE
 	{
 		VkFormat depthFormat = findDepthFormat();
 
-		m_depthImage = std::make_unique<ft::Image>(ft::Image::createDepthImage(
+		m_depthImage = std::make_unique<vk::Image>(vk::Image::createDepthImage(
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
 			m_swapchain->swapchain->getExtent(),
@@ -135,17 +135,17 @@ namespace LIB_NAMESPACE
 		m_swapchainUpdatedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-		ft::core::Semaphore::CreateInfo semaphoreInfo{};
+		vk::core::Semaphore::CreateInfo semaphoreInfo{};
 
-		ft::core::Fence::CreateInfo fenceInfo{};
+		vk::core::Fence::CreateInfo fenceInfo{};
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_imageAvailableSemaphores[i] = std::make_unique<ft::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_renderFinishedSemaphores[i] = std::make_unique<ft::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_swapchainUpdatedSemaphores[i] = std::make_unique<ft::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_inFlightFences[i] = std::make_unique<ft::core::Fence>(m_device->device->getVk(), fenceInfo);
+			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
+			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
+			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
+			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device->device->getVk(), fenceInfo);
 		}
 
 	}
@@ -553,13 +553,13 @@ namespace LIB_NAMESPACE
 
 
 
-	ft::Mesh::ID RenderAPI::loadModel(const std::string& filename)
+	vk::Mesh::ID RenderAPI::loadModel(const std::string& filename)
 	{
-		ft::Mesh::CreateInfo meshInfo = {};
+		vk::Mesh::CreateInfo meshInfo = {};
 
-		ft::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
+		vk::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
 
-		m_meshMap[m_maxMeshID] = std::make_unique<ft::Mesh>(
+		m_meshMap[m_maxMeshID] = std::make_unique<vk::Mesh>(
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
 			*m_command.get(),
@@ -571,7 +571,7 @@ namespace LIB_NAMESPACE
 
 	Descriptor::ID RenderAPI::createDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
 	{
-		ft::Descriptor::CreateInfo descriptorInfo{};
+		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -614,7 +614,7 @@ namespace LIB_NAMESPACE
 
 		createInfo.pNext = &renderingInfo;
 
-		m_pipelineMap[Pipeline::maxID] = std::make_unique<ft::Pipeline>(m_device->device->getVk(), createInfo);
+		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device->device->getVk(), createInfo);
 
 		return Pipeline::maxID++;
 	}
@@ -684,7 +684,7 @@ namespace LIB_NAMESPACE
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 	}
 
-	void RenderAPI::drawMesh(ft::Mesh::ID meshID)
+	void RenderAPI::drawMesh(vk::Mesh::ID meshID)
 	{
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
@@ -708,12 +708,12 @@ namespace LIB_NAMESPACE
 		return m_currentFrame;
 	}
 
-	std::unique_ptr<ft::Mesh>& RenderAPI::getMesh(ft::Mesh::ID meshID)
+	std::unique_ptr<vk::Mesh>& RenderAPI::getMesh(vk::Mesh::ID meshID)
 	{
 		return m_meshMap[meshID];
 	}
 
-	std::unique_ptr<ft::Descriptor>& RenderAPI::getDescriptor(Descriptor::ID descriptorID)
+	std::unique_ptr<vk::Descriptor>& RenderAPI::getDescriptor(Descriptor::ID descriptorID)
 	{
 		return m_descriptorMap[descriptorID];
 	}
@@ -723,7 +723,7 @@ namespace LIB_NAMESPACE
 		return m_textureMap[textureID];
 	}
 
-	std::unique_ptr<ft::UniformBuffer>& RenderAPI::getUniformBuffer(UniformBuffer::ID uniformBufferID)
+	std::unique_ptr<vk::UniformBuffer>& RenderAPI::getUniformBuffer(UniformBuffer::ID uniformBufferID)
 	{
 		return m_uniformBufferMap[uniformBufferID];
 	}

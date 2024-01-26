@@ -5,7 +5,7 @@
 
 // Define project namespace
 #ifndef LIB_NAMESPACE
-#	define LIB_NAMESPACE ft
+#	define LIB_NAMESPACE vk
 #endif
 
 #ifdef NDEBUG

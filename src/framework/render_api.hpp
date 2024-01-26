@@ -69,10 +69,10 @@ namespace LIB_NAMESPACE
 		// temporary functions to access private members
 		GLFWwindow* getWindow();
 		uint32_t currentFrame();
-		std::unique_ptr<ft::Mesh>& getMesh(Mesh::ID meshID);
-		std::unique_ptr<ft::Descriptor>& getDescriptor(Descriptor::ID descriptorID);
+		std::unique_ptr<vk::Mesh>& getMesh(Mesh::ID meshID);
+		std::unique_ptr<vk::Descriptor>& getDescriptor(Descriptor::ID descriptorID);
 		std::unique_ptr<Texture>& getTexture(Texture::ID textureID);
-		std::unique_ptr<ft::UniformBuffer>& getUniformBuffer(UniformBuffer::ID uniformBufferID);
+		std::unique_ptr<vk::UniformBuffer>& getUniformBuffer(UniformBuffer::ID uniformBufferID);
 
 	private:
 
@@ -84,33 +84,33 @@ namespace LIB_NAMESPACE
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 
-		std::unique_ptr<ft::Device> m_device;
+		std::unique_ptr<vk::Device> m_device;
 
-		std::unique_ptr<ft::Swapchain> m_swapchain;
+		std::unique_ptr<vk::Swapchain> m_swapchain;
 
-		std::map<Descriptor::ID, std::unique_ptr<ft::Descriptor>> m_descriptorMap;
+		std::map<Descriptor::ID, std::unique_ptr<vk::Descriptor>> m_descriptorMap;
 
-		std::unique_ptr<ft::Command> m_command;
+		std::unique_ptr<vk::Command> m_command;
 		std::vector<VkCommandBuffer> m_vkCommandBuffers;
 
-		std::map<Pipeline::ID, std::unique_ptr<ft::Pipeline>> m_pipelineMap;
+		std::map<Pipeline::ID, std::unique_ptr<vk::Pipeline>> m_pipelineMap;
 
-		std::unique_ptr<ft::Image> m_colorImage;
-		std::unique_ptr<ft::Image> m_depthImage;
+		std::unique_ptr<vk::Image> m_colorImage;
+		std::unique_ptr<vk::Image> m_depthImage;
 
-		std::vector<std::unique_ptr<ft::core::Semaphore>> m_imageAvailableSemaphores;
-		std::vector<std::unique_ptr<ft::core::Semaphore>> m_renderFinishedSemaphores;
-		std::vector<std::unique_ptr<ft::core::Semaphore>> m_swapchainUpdatedSemaphores;
-		std::vector<std::unique_ptr<ft::core::Fence>> m_inFlightFences;
+		std::vector<std::unique_ptr<vk::core::Semaphore>> m_imageAvailableSemaphores;
+		std::vector<std::unique_ptr<vk::core::Semaphore>> m_renderFinishedSemaphores;
+		std::vector<std::unique_ptr<vk::core::Semaphore>> m_swapchainUpdatedSemaphores;
+		std::vector<std::unique_ptr<vk::core::Fence>> m_inFlightFences;
 
 		Mesh::ID m_maxMeshID = 0;
-		std::map<Mesh::ID, std::unique_ptr<ft::Mesh>> m_meshMap;
+		std::map<Mesh::ID, std::unique_ptr<vk::Mesh>> m_meshMap;
 
 		uint32_t m_mipLevels;
 		Texture::ID m_maxTextureID;
 		std::map<Texture::ID, std::unique_ptr<Texture>> m_textureMap;
 
-		std::map<UniformBuffer::ID, std::unique_ptr<ft::UniformBuffer>> m_uniformBufferMap;
+		std::map<UniformBuffer::ID, std::unique_ptr<vk::UniformBuffer>> m_uniformBufferMap;
 
 		bool m_framebufferResized = false;
 		

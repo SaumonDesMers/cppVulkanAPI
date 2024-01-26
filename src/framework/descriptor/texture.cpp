@@ -24,7 +24,7 @@ namespace LIB_NAMESPACE
 			throw std::runtime_error("failed to load texture: " + createInfo.filepath);
 		}
 
-		ft::Buffer stagingBuffer = ft::Buffer::createStagingBuffer(
+		vk::Buffer stagingBuffer = vk::Buffer::createStagingBuffer(
 			device,
 			physicalDevice,
 			imageSize
@@ -158,7 +158,7 @@ namespace LIB_NAMESPACE
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = static_cast<float>(createInfo.mipLevel);
 
-		m_sampler = std::make_unique<ft::core::Sampler>(device, samplerInfo);
+		m_sampler = std::make_unique<vk::core::Sampler>(device, samplerInfo);
 	}
 
 	void Texture::createDescriptor(
@@ -172,7 +172,7 @@ namespace LIB_NAMESPACE
 		layoutBinding.descriptorCount = 1;
 		layoutBinding.stageFlags = createInfo.stageFlags;
 
-		ft::Descriptor::CreateInfo descriptorInfo{};
+		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 

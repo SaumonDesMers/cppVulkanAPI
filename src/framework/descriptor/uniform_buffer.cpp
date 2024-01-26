@@ -34,7 +34,7 @@ namespace LIB_NAMESPACE
 			bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			m_buffers[i] = std::make_unique<ft::Buffer>(
+			m_buffers[i] = std::make_unique<vk::Buffer>(
 				device,
 				physicalDevice,
 				bufferInfo,
@@ -56,7 +56,7 @@ namespace LIB_NAMESPACE
 		layoutBinding.descriptorCount = 1;
 		layoutBinding.stageFlags = createInfo.stageFlags;
 
-		ft::Descriptor::CreateInfo descriptorInfo{};
+		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 

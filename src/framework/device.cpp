@@ -30,19 +30,19 @@ namespace LIB_NAMESPACE
 
 	void Device::createInstance()
 	{
-		if (enableValidationLayers && ft::core::Instance::checkValidationLayerSupport(validationLayers) == false)
+		if (enableValidationLayers && vk::core::Instance::checkValidationLayerSupport(validationLayers) == false)
 		{
 			throw std::runtime_error("Validation layers requested, but not available");
 		}
 
-		ft::core::ApplicationInfo appInfo = {};
+		vk::core::ApplicationInfo appInfo = {};
 		appInfo.pApplicationName = "Playground";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "Playground Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_3;
 
-		ft::core::Instance::CreateInfo createInfo = {};
+		vk::core::Instance::CreateInfo createInfo = {};
 		createInfo.pApplicationInfo = &appInfo;
 
 		std::vector<const char*> extensions = getRequiredExtensions();
@@ -50,7 +50,7 @@ namespace LIB_NAMESPACE
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
-		ft::core::DebugMessenger::CreateInfo debugCreateInfo = {};
+		vk::core::DebugMessenger::CreateInfo debugCreateInfo = {};
 		if (enableValidationLayers)
 		{
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -64,7 +64,7 @@ namespace LIB_NAMESPACE
 			createInfo.enabledLayerCount = 0;
 		}
 
-		instance = std::make_unique<ft::core::Instance>(createInfo);
+		instance = std::make_unique<vk::core::Instance>(createInfo);
 	}
 
 	void Device::setupDebugMessenger()
@@ -74,15 +74,15 @@ namespace LIB_NAMESPACE
 			return;
 		}
 
-		ft::core::DebugMessenger::CreateInfo createInfo = {};
+		vk::core::DebugMessenger::CreateInfo createInfo = {};
 		populateDebugMessengerCreateInfo(createInfo);
 
-		debugMessenger = std::make_unique<ft::core::DebugMessenger>(instance->getVk(), createInfo);
+		debugMessenger = std::make_unique<vk::core::DebugMessenger>(instance->getVk(), createInfo);
 	}
 
 	void Device::createSurface()
 	{
-		surface = std::make_unique<ft::Window::Surface>(instance->getVk(), window->getGLFWwindow());
+		surface = std::make_unique<vk::Window::Surface>(instance->getVk(), window->getGLFWwindow());
 	}
 
 	void Device::pickPhysicalDevice()
@@ -110,7 +110,7 @@ namespace LIB_NAMESPACE
 			throw std::runtime_error("Failed to find a suitable GPU");
 		}
 
-		physicalDevice = std::make_unique<ft::core::PhysicalDevice>(pickedPhysicalDevice);
+		physicalDevice = std::make_unique<vk::core::PhysicalDevice>(pickedPhysicalDevice);
 	}
 
 	void Device::createLogicalDevice()
@@ -123,17 +123,17 @@ namespace LIB_NAMESPACE
 		float queuePriority = 1.0f;
 		for (uint32_t queueFamily : uniqueQueueFamilies)
 		{
-			ft::core::Queue::CreateInfo queueInfo = {};
+			vk::core::Queue::CreateInfo queueInfo = {};
 			queueInfo.queueFamilyIndex = queueFamily;
 			queueInfo.queueCount = 1;
 			queueInfo.pQueuePriorities = &queuePriority;
 			queueInfos.push_back(queueInfo);
 		}
 
-		ft::core::PhysicalDevice::Features deviceFeatures = {};
+		vk::core::PhysicalDevice::Features deviceFeatures = {};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-		ft::core::Device::CreateInfo deviceInfo = {};
+		vk::core::Device::CreateInfo deviceInfo = {};
 		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
 		deviceInfo.pQueueCreateInfos = queueInfos.data();
 		deviceInfo.pEnabledFeatures = &deviceFeatures;
@@ -157,10 +157,10 @@ namespace LIB_NAMESPACE
 			deviceInfo.enabledLayerCount = 0;
 		}
 
-		device = std::make_unique<ft::core::Device>(physicalDevice->getVk(), deviceInfo);
+		device = std::make_unique<vk::core::Device>(physicalDevice->getVk(), deviceInfo);
 
-		graphicsQueue = std::make_unique<ft::core::Queue>(device->getVk(), indices.graphicsFamily.value());
-		presentQueue = std::make_unique<ft::core::Queue>(device->getVk(), indices.presentFamily.value());
+		graphicsQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.graphicsFamily.value());
+		presentQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.presentFamily.value());
 	}
 
 
@@ -174,7 +174,7 @@ namespace LIB_NAMESPACE
 		return extensions;
 	}
 
-	void Device::populateDebugMessengerCreateInfo(ft::core::DebugMessenger::CreateInfo& createInfo)
+	void Device::populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo)
 	{
 		createInfo.messageSeverity =
 			// VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -196,7 +196,7 @@ namespace LIB_NAMESPACE
 			Instead, use the following:
 			createInfo.userCallback = customUserCallback;
 
-			Which has the default value: ft::core::DebugMessenger::debugCallback
+			Which has the default value: vk::core::DebugMessenger::debugCallback
 		*/
 	}
 
@@ -204,7 +204,7 @@ namespace LIB_NAMESPACE
 	{
 		Queue::FamilyIndices indices = findQueueFamilies(physicalDevice);
 
-		bool extensionsSupported = ft::core::PhysicalDevice::checkExtensionSupport(physicalDevice, deviceExtensions);
+		bool extensionsSupported = vk::core::PhysicalDevice::checkExtensionSupport(physicalDevice, deviceExtensions);
 
 		bool swapChainAdequate = false;
 		if (extensionsSupported)
@@ -224,7 +224,7 @@ namespace LIB_NAMESPACE
 	{
 		Queue::FamilyIndices indices;
 
-		std::vector<VkQueueFamilyProperties> queueFamilyProperties = ft::core::PhysicalDevice::getQueueFamilyProperties(physicalDevice);
+		std::vector<VkQueueFamilyProperties> queueFamilyProperties = vk::core::PhysicalDevice::getQueueFamilyProperties(physicalDevice);
 
 		int i = 0;
 		for (const auto& queueFamily : queueFamilyProperties)
@@ -234,7 +234,7 @@ namespace LIB_NAMESPACE
 				indices.graphicsFamily = i;
 			}
 
-			VkBool32 presentSupport = ft::core::PhysicalDevice::getSurfaceSupport(physicalDevice, i, surface->getVk());
+			VkBool32 presentSupport = vk::core::PhysicalDevice::getSurfaceSupport(physicalDevice, i, surface->getVk());
 
 			if (presentSupport)
 			{
@@ -256,9 +256,9 @@ namespace LIB_NAMESPACE
 	{
 		Swapchain::SupportDetails details;
 
-		details.capabilities = ft::core::PhysicalDevice::getSurfaceCapabilities(device, surface->getVk());
-		details.formats = ft::core::PhysicalDevice::getSurfaceFormats(device, surface->getVk());
-		details.presentModes = ft::core::PhysicalDevice::getSurfacePresentModes(device, surface->getVk());
+		details.capabilities = vk::core::PhysicalDevice::getSurfaceCapabilities(device, surface->getVk());
+		details.formats = vk::core::PhysicalDevice::getSurfaceFormats(device, surface->getVk());
+		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(device, surface->getVk());
 
 		return details;
 	}

@@ -61,7 +61,7 @@ namespace LIB_NAMESPACE
 		void createLogicalDevice();
 
 		std::vector<const char*> getRequiredExtensions();
-		void populateDebugMessengerCreateInfo(ft::core::DebugMessenger::CreateInfo& createInfo);
+		void populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo);
 		bool isDeviceSuitable(const VkPhysicalDevice& physicalDevice);
 		VkSampleCountFlagBits getMaxUsableSampleCount(const VkPhysicalDevice& physicalDevice);
 
