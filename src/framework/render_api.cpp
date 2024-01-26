@@ -9,13 +9,14 @@
 
 #include <set>
 #include <chrono>
+#include <iostream>
 
 namespace LIB_NAMESPACE
 {
 
-	RenderAPI::RenderAPI()
+	RenderAPI::RenderAPI(GLFWwindow *glfwWindow)
 	{	
-		init();
+		init(glfwWindow);
 	}
 
 	RenderAPI::~RenderAPI()
@@ -28,9 +29,9 @@ namespace LIB_NAMESPACE
 		}
 	}
 
-	void RenderAPI::init()
+	void RenderAPI::init(GLFWwindow *glfwWindow)
 	{
-		createDevice();
+		createDevice(glfwWindow);
 		createSwapchain();
 		createColorResources();
 		createDepthResources();
@@ -39,9 +40,9 @@ namespace LIB_NAMESPACE
 	}
 
 
-	void RenderAPI::createDevice()
+	void RenderAPI::createDevice(GLFWwindow *glfwWindow)
 	{
-		m_device = std::make_unique<vk::Device>();
+		m_device = std::make_unique<vk::Device>(glfwWindow);
 	}
 
 	void RenderAPI::createSwapchain()
@@ -51,7 +52,7 @@ namespace LIB_NAMESPACE
 		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice->getVk());
 		
 		int width, height;
-		m_device->window->getFramebufferSize(&width, &height);
+		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
 		swapchainInfo.frameBufferExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
 		swapchainInfo.queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice->getVk());
@@ -64,12 +65,14 @@ namespace LIB_NAMESPACE
 	void RenderAPI::recreateSwapChain()
 	{
 		int width = 0, height = 0;
-		m_device->window->getFramebufferSize(&width, &height);
+		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
 		while (width == 0 || height == 0)
 		{
-			m_device->window->getFramebufferSize(&width, &height);
-			m_device->windowManager->waitEvents();
+			glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
+			glfwWaitEvents();
 		}
+
+		std::cout << "recreate swapchain" << std::endl;
 
 		m_device->device->waitIdle();
 
@@ -700,7 +703,8 @@ namespace LIB_NAMESPACE
 
 	GLFWwindow* RenderAPI::getWindow()
 	{
-		return m_device->window->getGLFWwindow();
+		// return m_device->window->getGLFWwindow();
+		return m_device->glfwWindow;
 	}
 
 	uint32_t RenderAPI::currentFrame()

@@ -46,7 +46,7 @@ target_sources(${PROJECT_NAME}
 		src/core/buffer.cpp
 		src/core/device_memory.cpp
 
-		src/framework/window/window.cpp
+		src/framework/window/surface.cpp
 		src/framework/device.cpp
 		src/framework/swapchain.cpp
 		src/framework/pipeline.cpp

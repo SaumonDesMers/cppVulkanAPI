@@ -1,7 +1,7 @@
 #pragma once
 
 #include "defines.hpp"
-#include "window/window.hpp"
+#include "window/surface.hpp"
 #include "core/instance.hpp"
 #include "core/debug.hpp"
 #include "core/physical_device.hpp"
@@ -20,13 +20,12 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		std::unique_ptr<Window::Manager> windowManager;
-		std::unique_ptr<Window> window;
+		GLFWwindow *glfwWindow;
 
 		std::unique_ptr<core::Instance> instance;
 		std::unique_ptr<core::DebugMessenger> debugMessenger;
 
-		std::unique_ptr<Window::Surface> surface;
+		std::unique_ptr<Surface> surface;
 
 		std::unique_ptr<core::PhysicalDevice> physicalDevice;
 		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -36,7 +35,7 @@ namespace LIB_NAMESPACE
 		std::unique_ptr<core::Queue> presentQueue;
 
 
-		Device();
+		Device(GLFWwindow *glfwWindow);
 		~Device();
 
 		Swapchain::SupportDetails querySwapChainSupport(const VkPhysicalDevice& device);

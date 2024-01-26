@@ -35,7 +35,7 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		RenderAPI();
+		RenderAPI(GLFWwindow *glfwWindow);
 		~RenderAPI();
 
 		Mesh::ID loadModel(const std::string& filename);
@@ -116,9 +116,9 @@ namespace LIB_NAMESPACE
 		
 		uint32_t m_currentFrame = 0;
 
-		void init();
+		void init(GLFWwindow *glfwWindow);
 
-		void createDevice();
+		void createDevice(GLFWwindow *glfwWindow);
 		void createSwapchain();
 		void recreateSwapChain();
 		void createDescriptor();

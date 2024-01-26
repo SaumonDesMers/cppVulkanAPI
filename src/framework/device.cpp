@@ -6,9 +6,10 @@
 
 namespace LIB_NAMESPACE
 {
-	Device::Device()
+	Device::Device(GLFWwindow *glfwWindow)
+		: glfwWindow(glfwWindow)
 	{
-		createWindow();
+		// createWindow();
 		createInstance();
 		setupDebugMessenger();
 		createSurface();
@@ -24,8 +25,8 @@ namespace LIB_NAMESPACE
 	
 	void Device::createWindow()
 	{
-		windowManager = std::make_unique<Window::Manager>();
-		window = windowManager->createWindow("Master window", 800, 600);
+		// windowManager = std::make_unique<Window::Manager>();
+		// window = windowManager->createWindow("Master window", 800, 600);
 	}
 
 	void Device::createInstance()
@@ -82,7 +83,7 @@ namespace LIB_NAMESPACE
 
 	void Device::createSurface()
 	{
-		surface = std::make_unique<vk::Window::Surface>(instance->getVk(), window->getGLFWwindow());
+		surface = std::make_unique<vk::Surface>(instance->getVk(), glfwWindow);
 	}
 
 	void Device::pickPhysicalDevice()
@@ -164,8 +165,12 @@ namespace LIB_NAMESPACE
 	}
 
 
-	std::vector<const char*> Device::getRequiredExtensions() {
-		std::vector<const char*> extensions = windowManager->getRequiredInstanceExtensions();
+	std::vector<const char*> Device::getRequiredExtensions()
+	{
+		uint32_t glfwExtensionCount = 0;
+		const char ** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+		std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
 		if (enableValidationLayers) {
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
