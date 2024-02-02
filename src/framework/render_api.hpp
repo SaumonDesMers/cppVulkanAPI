@@ -22,6 +22,7 @@
 #include <vector>
 #include <map>
 #include <chrono>
+#include <mutex>
 
 struct ViewProj_UBO {
 	glm::mat4 view;
@@ -113,8 +114,10 @@ namespace LIB_NAMESPACE
 		std::map<UniformBuffer::ID, std::unique_ptr<vk::UniformBuffer>> m_uniformBufferMap;
 
 		bool m_framebufferResized = false;
-		
+
 		uint32_t m_currentFrame = 0;
+
+		std::mutex m_global_mutex;
 
 		void init(GLFWwindow *glfwWindow);
 
