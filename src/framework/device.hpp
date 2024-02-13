@@ -20,8 +20,18 @@ namespace LIB_NAMESPACE
 
 	public:
 
+		const std::vector<const char*> validationLayers = {
+			"VK_LAYER_KHRONOS_validation"
+		};
+
+		const std::vector<const char*> deviceExtensions = {
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
+		};
+
 		GLFWwindow *glfwWindow;
 
+		// core::Instance m_instance;
 		std::unique_ptr<core::Instance> instance;
 		std::unique_ptr<core::DebugMessenger> debugMessenger;
 
@@ -43,21 +53,13 @@ namespace LIB_NAMESPACE
 
 	private:
 
-		const std::vector<const char*> validationLayers = {
-			"VK_LAYER_KHRONOS_validation"
-		};
-
-		const std::vector<const char*> deviceExtensions = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
-		};
-
-		void createWindow();
 		void createInstance();
 		void setupDebugMessenger();
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
+
+		VkInstanceCreateInfo instanceCreateInfo();
 
 		std::vector<const char*> getRequiredExtensions();
 		void populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo);

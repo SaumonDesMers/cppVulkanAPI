@@ -6,10 +6,11 @@
 
 namespace LIB_NAMESPACE
 {
-	Device::Device(GLFWwindow *glfwWindow)
-		: glfwWindow(glfwWindow)
+	Device::Device(GLFWwindow *glfwWindow):
+		glfwWindow(glfwWindow)
+		// m_instance(instanceCreateInfo()),
+		// instance(std::make_unique<vk::core::Instance>(instanceCreateInfo()))
 	{
-		// createWindow();
 		createInstance();
 		setupDebugMessenger();
 		createSurface();
@@ -22,24 +23,17 @@ namespace LIB_NAMESPACE
 
 	}
 
-	
-	void Device::createWindow()
-	{
-		// windowManager = std::make_unique<Window::Manager>();
-		// window = windowManager->createWindow("Master window", 800, 600);
-	}
-
 	void Device::createInstance()
 	{
-		if (enableValidationLayers && vk::core::Instance::checkValidationLayerSupport(validationLayers) == false)
+		if (enableValidationLayers && core::Instance::checkValidationLayerSupport(validationLayers) == false)
 		{
 			throw std::runtime_error("Validation layers requested, but not available");
 		}
 
 		vk::core::ApplicationInfo appInfo = {};
-		appInfo.pApplicationName = "Playground";
+		appInfo.pApplicationName = "Application";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.pEngineName = "Playground Engine";
+		appInfo.pEngineName = "Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_3;
 
@@ -68,6 +62,52 @@ namespace LIB_NAMESPACE
 		instance = std::make_unique<vk::core::Instance>(createInfo);
 	}
 
+	VkInstanceCreateInfo Device::instanceCreateInfo()
+	{
+		if (enableValidationLayers && core::Instance::checkValidationLayerSupport(validationLayers) == false)
+		{
+			throw std::runtime_error("Validation layers requested, but not available");
+		}
+
+		VkApplicationInfo appInfo = {};
+		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		appInfo.pApplicationName = "Application";
+		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+		appInfo.pEngineName = "Engine";
+		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+		appInfo.apiVersion = VK_API_VERSION_1_3;
+
+		std::cout << "VK_API_VERSION_1_3: " << VK_API_VERSION_1_3 << std::endl;
+		std::cout << "appInfo.apiVersion: " << appInfo.apiVersion << std::endl;
+
+		VkInstanceCreateInfo createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		createInfo.pApplicationInfo = &appInfo;
+
+		std::vector<const char*> extensions = getRequiredExtensions();
+
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+		createInfo.ppEnabledExtensionNames = extensions.data();
+
+		core::DebugMessenger::CreateInfo debugCreateInfo;
+		if (enableValidationLayers)
+		{
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+
+			populateDebugMessengerCreateInfo(debugCreateInfo);
+			createInfo.pNext = &debugCreateInfo;
+		}
+		else
+		{
+			createInfo.enabledLayerCount = 0;
+
+			createInfo.pNext = nullptr;
+		}
+		
+		return createInfo;
+	}
+
 	void Device::setupDebugMessenger()
 	{
 		if (enableValidationLayers == false)
@@ -78,16 +118,19 @@ namespace LIB_NAMESPACE
 		vk::core::DebugMessenger::CreateInfo createInfo = {};
 		populateDebugMessengerCreateInfo(createInfo);
 
+		// debugMessenger = std::make_unique<vk::core::DebugMessenger>(m_instance.getVk(), createInfo);
 		debugMessenger = std::make_unique<vk::core::DebugMessenger>(instance->getVk(), createInfo);
 	}
 
 	void Device::createSurface()
 	{
+		// surface = std::make_unique<vk::Surface>(m_instance.getVk(), glfwWindow);
 		surface = std::make_unique<vk::Surface>(instance->getVk(), glfwWindow);
 	}
 
 	void Device::pickPhysicalDevice()
 	{
+		// std::vector<VkPhysicalDevice> physicalDevices = m_instance.getPhysicalDevices();
 		std::vector<VkPhysicalDevice> physicalDevices = instance->getPhysicalDevices();
 
 		if (physicalDevices.empty())

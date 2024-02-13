@@ -13,6 +13,7 @@
 #include "core/image/sampler.hpp"
 #include "core/sync_object.hpp"
 #include "object/mesh.hpp"
+#include "map.hpp"
 
 #include <glm/glm.hpp>
 
@@ -111,6 +112,7 @@ namespace LIB_NAMESPACE
 		std::map<Texture::ID, std::unique_ptr<Texture>> m_textureMap;
 
 		std::map<UniformBuffer::ID, std::unique_ptr<vk::UniformBuffer>> m_uniformBufferMap;
+		// vk::Map<vk::UniformBuffer> m_uniformBufferMap;
 
 		bool m_framebufferResized = false;
 		
@@ -121,7 +123,6 @@ namespace LIB_NAMESPACE
 		void createDevice(GLFWwindow *glfwWindow);
 		void createSwapchain();
 		void recreateSwapChain();
-		void createDescriptor();
 		void createCommandPool();
 		void createColorResources();
 		void createDepthResources();
