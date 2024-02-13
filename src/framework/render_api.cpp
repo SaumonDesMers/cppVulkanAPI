@@ -15,7 +15,7 @@ namespace LIB_NAMESPACE
 {
 
 	RenderAPI::RenderAPI(GLFWwindow *glfwWindow)
-	{	
+	{
 		init(glfwWindow);
 	}
 
@@ -50,7 +50,7 @@ namespace LIB_NAMESPACE
 		vk::Swapchain::CreateInfo swapchainInfo = {};
 		swapchainInfo.surface = m_device->surface->getVk();
 		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice->getVk());
-		
+
 		int width, height;
 		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
 		swapchainInfo.frameBufferExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
@@ -408,6 +408,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::startDraw()
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		m_inFlightFences[m_currentFrame]->wait();
@@ -435,6 +437,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::startRendering()
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		VkRenderingAttachmentInfo colorAttachment{};
@@ -466,6 +470,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::endRendering()
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdEndRendering(cmd);
@@ -473,6 +479,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::endDraw()
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		m_command->transitionImageLayout(
@@ -558,6 +566,8 @@ namespace LIB_NAMESPACE
 
 	vk::Mesh::ID RenderAPI::loadModel(const std::string& filename)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		vk::Mesh::CreateInfo meshInfo = {};
 
 		vk::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
@@ -574,6 +584,8 @@ namespace LIB_NAMESPACE
 
 	Descriptor::ID RenderAPI::createDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
@@ -588,6 +600,8 @@ namespace LIB_NAMESPACE
 
 	Texture::ID RenderAPI::loadTexture(Texture::CreateInfo& createInfo)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		m_textureMap[m_maxTextureID] = std::make_unique<Texture>(
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
@@ -608,6 +622,8 @@ namespace LIB_NAMESPACE
 
 	Pipeline::ID RenderAPI::createPipeline(Pipeline::CreateInfo& createInfo)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkFormat colorAttachementFormat = m_colorImage->format();
 		VkPipelineRenderingCreateInfo renderingInfo = {};
 		renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
@@ -624,6 +640,8 @@ namespace LIB_NAMESPACE
 
 	UniformBuffer::ID RenderAPI::createUniformBuffer(UniformBuffer::CreateInfo& createInfo)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		m_uniformBufferMap[UniformBuffer::maxID] = std::make_unique<UniformBuffer>(
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
@@ -640,6 +658,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::bindPipeline(Pipeline::ID pipelineID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineMap[pipelineID]->pipeline->getVk());
@@ -652,6 +672,8 @@ namespace LIB_NAMESPACE
 		const VkDescriptorSet *pDescriptorSets
 	)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdBindDescriptorSets(
@@ -666,6 +688,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::pushConstant(Pipeline::ID pipelineID, VkShaderStageFlags stageFlags, uint32_t size, const void* data)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdPushConstants(
@@ -680,6 +704,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::setViewport(VkViewport& viewport)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -687,6 +713,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::setScissor(VkRect2D& scissor)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
@@ -694,6 +722,8 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::drawMesh(vk::Mesh::ID meshID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
 		VkBuffer vertexBuffers[] = {m_meshMap[meshID]->vertexBuffer().buffer()};
@@ -708,7 +738,6 @@ namespace LIB_NAMESPACE
 
 	GLFWwindow* RenderAPI::getWindow()
 	{
-		// return m_device->window->getGLFWwindow();
 		return m_device->glfwWindow;
 	}
 
@@ -719,21 +748,29 @@ namespace LIB_NAMESPACE
 
 	std::unique_ptr<vk::Mesh>& RenderAPI::getMesh(vk::Mesh::ID meshID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		return m_meshMap[meshID];
 	}
 
 	std::unique_ptr<vk::Descriptor>& RenderAPI::getDescriptor(Descriptor::ID descriptorID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		return m_descriptorMap[descriptorID];
 	}
 
 	std::unique_ptr<Texture>& RenderAPI::getTexture(Texture::ID textureID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		return m_textureMap[textureID];
 	}
 
 	std::unique_ptr<vk::UniformBuffer>& RenderAPI::getUniformBuffer(UniformBuffer::ID uniformBufferID)
 	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
 		return m_uniformBufferMap[uniformBufferID];
 		// return m_uniformBufferMap.get(uniformBufferID);
 	}
