@@ -23,10 +23,10 @@ target_compile_options(${PROJECT_NAME}
 
 target_sources(${PROJECT_NAME}
 	PUBLIC
-		src/core/instance.cpp
+		src/core/instance/instance.cpp
 		src/core/debug.cpp
 		src/core/physical_device.cpp
-		src/core/device.cpp
+		src/core/logical_device.cpp
 		src/core/queue.cpp
 		src/core/swapchain.cpp
 		src/core/image/image.cpp
@@ -75,8 +75,18 @@ target_include_directories(${PROJECT_NAME}
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/external/glm
 		${CMAKE_CURRENT_SOURCE_DIR}/external/stb
 		${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobjloader
+
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/src/core
+		${CMAKE_CURRENT_SOURCE_DIR}/src/core/image
+		${CMAKE_CURRENT_SOURCE_DIR}/src/core/instance
+		${CMAKE_CURRENT_SOURCE_DIR}/src/core/pipeline
+		${CMAKE_CURRENT_SOURCE_DIR}/src/framework
+		${CMAKE_CURRENT_SOURCE_DIR}/src/framework/descriptor
+		${CMAKE_CURRENT_SOURCE_DIR}/src/framework/memory
+		${CMAKE_CURRENT_SOURCE_DIR}/src/framework/object
+		${CMAKE_CURRENT_SOURCE_DIR}/src/framework/window
 )

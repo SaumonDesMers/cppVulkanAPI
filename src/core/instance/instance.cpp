@@ -12,15 +12,11 @@ namespace LIB_NAMESPACE
 
 		Instance::Instance(const VkInstanceCreateInfo & createInfo)
 		{
-			std::cout << "createInfo.pApplicationInfo.apiVersion: " << createInfo.pApplicationInfo->apiVersion << std::endl;
-
 			VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
-
-			std::string str1 = std::string("Failed to create instance.") + std::string(string_VkResult(result));
 
 			if (result != VK_SUCCESS)
 			{
-				throw std::runtime_error("Failed to create instance.");
+				TROW("Failed to create instance.", result);
 			}
 		}
 

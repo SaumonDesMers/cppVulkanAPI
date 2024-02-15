@@ -2,10 +2,11 @@
 
 #include "defines.hpp"
 #include "window/surface.hpp"
-#include "core/instance.hpp"
+#include "core/instance/instance.hpp"
+#include "core/instance/instance_create_info.hpp"
 #include "core/debug.hpp"
 #include "core/physical_device.hpp"
-#include "core/device.hpp"
+#include "core/logical_device.hpp"
 #include "swapchain.hpp"
 #include "queue.hpp"
 
@@ -31,8 +32,7 @@ namespace LIB_NAMESPACE
 
 		GLFWwindow *glfwWindow;
 
-		// core::Instance m_instance;
-		std::unique_ptr<core::Instance> instance;
+		core::Instance m_instance;
 		std::unique_ptr<core::DebugMessenger> debugMessenger;
 
 		std::unique_ptr<Surface> surface;
@@ -53,13 +53,11 @@ namespace LIB_NAMESPACE
 
 	private:
 
-		void createInstance();
+		core::InstanceCreateInfo instanceCreateInfo();
 		void setupDebugMessenger();
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
-
-		VkInstanceCreateInfo instanceCreateInfo();
 
 		std::vector<const char*> getRequiredExtensions();
 		void populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo);

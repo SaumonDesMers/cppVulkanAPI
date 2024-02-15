@@ -20,7 +20,7 @@ namespace LIB_NAMESPACE
 		struct CreateInfo
 		{
 			std::string filepath;
-			uint32_t mipLevel;
+			uint32_t mipLevel = 0;
 			VkShaderStageFlags stageFlags;
 		};
 

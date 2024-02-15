@@ -11,19 +11,10 @@ namespace LIB_NAMESPACE
 {
 	namespace core
 	{
-		struct ApplicationInfo: public VkApplicationInfo
-		{
-			ApplicationInfo(): VkApplicationInfo()
-			{
-				sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-			}
-		};
-
 		class Instance
 		{
 
 		public:
-
 
 			struct CreateInfo: public VkInstanceCreateInfo
 			{
