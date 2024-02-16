@@ -8,9 +8,11 @@ namespace LIB_NAMESPACE
 {
 	Device::Device(GLFWwindow *glfwWindow):
 		glfwWindow(glfwWindow),
-		m_instance(instanceCreateInfo())
+		m_instance(instanceCreateInfo()),
+#ifndef NDEBUG
+		m_debug_messenger(m_instance.getVk(), debugMessengerCreateInfo())
+#endif
 	{
-		setupDebugMessenger();
 		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
@@ -42,24 +44,30 @@ namespace LIB_NAMESPACE
 		{
 			createInfo.setEnabledLayerNames(validationLayers);
 
-			populateDebugMessengerCreateInfo(createInfo.debugMessengerCreateInfo);
+			createInfo.debugMessengerCreateInfo = debugMessengerCreateInfo();
 			createInfo.pNext = &createInfo.debugMessengerCreateInfo;
 		}
 		
 		return createInfo;
 	}
 
-	void Device::setupDebugMessenger()
+	core::DebugMessengerCreateInfo Device::debugMessengerCreateInfo()
 	{
-		if (enableValidationLayers == false)
-		{
-			return;
-		}
+		core::DebugMessengerCreateInfo createInfo = {};
+		createInfo.messageSeverity =
+			// VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+			// VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-		vk::core::DebugMessenger::CreateInfo createInfo = {};
-		populateDebugMessengerCreateInfo(createInfo);
+		createInfo.messageType =
+			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
-		debugMessenger = std::make_unique<vk::core::DebugMessenger>(m_instance.getVk(), createInfo);
+		createInfo.pUserData = nullptr;
+
+		return createInfo;
 	}
 
 	void Device::createSurface()
@@ -158,32 +166,6 @@ namespace LIB_NAMESPACE
 		}
 
 		return extensions;
-	}
-
-	void Device::populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo)
-	{
-		createInfo.messageSeverity =
-			// VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-			// VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-
-		createInfo.messageType =
-			VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-
-		createInfo.pUserData = nullptr; // Optional
-
-		/*
-			This is used internally by the debug messenger to call the user callback.
-			createInfo.pfnUserCallback = customUserCallback;
-
-			Instead, use the following:
-			createInfo.userCallback = customUserCallback;
-
-			Which has the default value: vk::core::DebugMessenger::debugCallback
-		*/
 	}
 
 	bool Device::isDeviceSuitable(const VkPhysicalDevice& physicalDevice)

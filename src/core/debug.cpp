@@ -9,15 +9,11 @@ namespace LIB_NAMESPACE
 	{
 		DebugMessenger::DebugMessenger(
 			VkInstance instance,
-			CreateInfo& createInfo
+			const VkDebugUtilsMessengerCreateInfoEXT & createInfo
 		):
 			m_instance(instance)
 		{
-			m_customUserData.userCallback = createInfo.userCallback;
-			m_customUserData.pUserData = createInfo.pUserData;
-			createInfo.pUserData = &m_customUserData;
-
-			createInfo.pfnUserCallback = debugCallback;
+			// createInfo.pfnUserCallback = debugCallback;
 
 			if (createDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
 			{
@@ -32,9 +28,9 @@ namespace LIB_NAMESPACE
 
 		VkResult DebugMessenger::createDebugUtilsMessengerEXT(
 			VkInstance instance,
-			const CreateInfo* createInfo,
-			const VkAllocationCallbacks* pAllocator,
-			VkDebugUtilsMessengerEXT* pDebugMessenger
+			const VkDebugUtilsMessengerCreateInfoEXT * createInfo,
+			const VkAllocationCallbacks * pAllocator,
+			VkDebugUtilsMessengerEXT * pDebugMessenger
 		)
 		{
 			auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -51,7 +47,7 @@ namespace LIB_NAMESPACE
 		void DebugMessenger::destroyDebugUtilsMessengerEXT(
 			VkInstance instance,
 			VkDebugUtilsMessengerEXT debugMessenger,
-			const VkAllocationCallbacks* pAllocator
+			const VkAllocationCallbacks * pAllocator
 		)
 		{
 			auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -61,35 +57,21 @@ namespace LIB_NAMESPACE
 			}
 		}
 
-		VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessenger::debugCallback(
+		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType,
-			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+			const VkDebugUtilsMessengerCallbackDataEXT * pCallbackData,
 			void* pUserData
 		)
 		{
-			auto customUserData = reinterpret_cast<CustomUserData*>(pUserData);
+			(void)messageSeverity;
+			(void)messageType;
+			(void)pUserData;
 
-			if (customUserData && customUserData->userCallback != nullptr)
-			{
-				customUserData->userCallback(messageSeverity, messageType, pCallbackData, customUserData->pUserData);
-			}
-			else
-			{
-				defaultDebugCallback(messageSeverity, messageType, pCallbackData, customUserData ? customUserData->pUserData : nullptr);
-			}
+			std::cerr << pCallbackData->pMessage << "\n" << std::endl;
 
 			return VK_FALSE;
 		}
 
-		void DebugMessenger::defaultDebugCallback(
-			VkDebugUtilsMessageSeverityFlagBitsEXT,
-			VkDebugUtilsMessageTypeFlagsEXT,
-			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-			void*
-		)
-		{
-			std::cerr << pCallbackData->pMessage << "\n" << std::endl;
-		}
 	}
 }

@@ -37,7 +37,7 @@ namespace LIB_NAMESPACE
 			InstanceCreateInfo(InstanceCreateInfo && other):
 				VkInstanceCreateInfo(other),
 				applicationInfo(other.applicationInfo),
-				debugMessengerCreateInfo(other.debugMessengerCreateInfo)
+				debugMessengerCreateInfo(std::move(other.debugMessengerCreateInfo))
 			{
 				m_enabledLayerNames = std::move(other.m_enabledLayerNames);
 				m_enabledExtensionNames = std::move(other.m_enabledExtensionNames);
@@ -58,7 +58,7 @@ namespace LIB_NAMESPACE
 			}
 
 			ApplicationInfo applicationInfo;
-			DebugMessenger::CreateInfo debugMessengerCreateInfo;
+			DebugMessengerCreateInfo debugMessengerCreateInfo;
 			
 		private:
 

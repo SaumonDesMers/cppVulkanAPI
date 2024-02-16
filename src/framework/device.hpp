@@ -33,7 +33,9 @@ namespace LIB_NAMESPACE
 		GLFWwindow *glfwWindow;
 
 		core::Instance m_instance;
-		std::unique_ptr<core::DebugMessenger> debugMessenger;
+#ifndef NDEBUG
+		core::DebugMessenger m_debug_messenger;
+#endif
 
 		std::unique_ptr<Surface> surface;
 
@@ -54,13 +56,12 @@ namespace LIB_NAMESPACE
 	private:
 
 		core::InstanceCreateInfo instanceCreateInfo();
-		void setupDebugMessenger();
+		core::DebugMessengerCreateInfo debugMessengerCreateInfo();
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
 
 		std::vector<const char*> getRequiredExtensions();
-		void populateDebugMessengerCreateInfo(vk::core::DebugMessenger::CreateInfo& createInfo);
 		bool isDeviceSuitable(const VkPhysicalDevice& physicalDevice);
 		VkSampleCountFlagBits getMaxUsableSampleCount(const VkPhysicalDevice& physicalDevice);
 
