@@ -30,6 +30,9 @@ namespace LIB_NAMESPACE
 			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
 		};
 
+		Surface & surface() { return m_surface; }
+		const Surface & surface() const { return m_surface; }
+
 		GLFWwindow *glfwWindow;
 
 		core::Instance m_instance;
@@ -37,7 +40,7 @@ namespace LIB_NAMESPACE
 		core::DebugMessenger m_debug_messenger;
 #endif
 
-		std::unique_ptr<Surface> surface;
+		Surface m_surface;
 
 		std::unique_ptr<core::PhysicalDevice> physicalDevice;
 		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -57,7 +60,6 @@ namespace LIB_NAMESPACE
 
 		core::InstanceCreateInfo instanceCreateInfo();
 		core::DebugMessengerCreateInfo debugMessengerCreateInfo();
-		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
 

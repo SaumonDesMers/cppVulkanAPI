@@ -48,7 +48,7 @@ namespace LIB_NAMESPACE
 	void RenderAPI::createSwapchain()
 	{
 		vk::Swapchain::CreateInfo swapchainInfo = {};
-		swapchainInfo.surface = m_device->surface->getVk();
+		swapchainInfo.surface = m_device->surface().getVk();
 		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice->getVk());
 
 		int width, height;

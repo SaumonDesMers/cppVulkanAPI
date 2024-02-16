@@ -10,10 +10,10 @@ namespace LIB_NAMESPACE
 		glfwWindow(glfwWindow),
 		m_instance(instanceCreateInfo()),
 #ifndef NDEBUG
-		m_debug_messenger(m_instance.getVk(), debugMessengerCreateInfo())
+		m_debug_messenger(m_instance.getVk(), debugMessengerCreateInfo()),
 #endif
+		m_surface(m_instance.getVk(), glfwWindow)
 	{
-		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
 	}
@@ -68,11 +68,6 @@ namespace LIB_NAMESPACE
 		createInfo.pUserData = nullptr;
 
 		return createInfo;
-	}
-
-	void Device::createSurface()
-	{
-		surface = std::make_unique<vk::Surface>(m_instance.getVk(), glfwWindow);
 	}
 
 	void Device::pickPhysicalDevice()
@@ -202,7 +197,7 @@ namespace LIB_NAMESPACE
 				indices.graphicsFamily = i;
 			}
 
-			VkBool32 presentSupport = vk::core::PhysicalDevice::getSurfaceSupport(physicalDevice, i, surface->getVk());
+			VkBool32 presentSupport = vk::core::PhysicalDevice::getSurfaceSupport(physicalDevice, i, m_surface.getVk());
 
 			if (presentSupport)
 			{
@@ -224,9 +219,9 @@ namespace LIB_NAMESPACE
 	{
 		Swapchain::SupportDetails details;
 
-		details.capabilities = vk::core::PhysicalDevice::getSurfaceCapabilities(device, surface->getVk());
-		details.formats = vk::core::PhysicalDevice::getSurfaceFormats(device, surface->getVk());
-		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(device, surface->getVk());
+		details.capabilities = vk::core::PhysicalDevice::getSurfaceCapabilities(device, m_surface.getVk());
+		details.formats = vk::core::PhysicalDevice::getSurfaceFormats(device, m_surface.getVk());
+		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(device, m_surface.getVk());
 
 		return details;
 	}
