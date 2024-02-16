@@ -49,13 +49,13 @@ namespace LIB_NAMESPACE
 	{
 		vk::Swapchain::CreateInfo swapchainInfo = {};
 		swapchainInfo.surface = m_device->surface().getVk();
-		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice->getVk());
+		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice().getVk());
 
 		int width, height;
 		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
 		swapchainInfo.frameBufferExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
-		swapchainInfo.queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice->getVk());
+		swapchainInfo.queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice().getVk());
 
 		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -89,7 +89,7 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createCommandPool()
 	{
-		vk::Queue::FamilyIndices queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice->getVk());
+		vk::Queue::FamilyIndices queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice().getVk());
 
 		vk::Command::CreateInfo commandInfo{};
 		commandInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
@@ -110,7 +110,7 @@ namespace LIB_NAMESPACE
 	{
 		m_colorImage = std::make_unique<vk::Image>(vk::Image::createColorImage(
 			m_device->device->getVk(),
-			m_device->physicalDevice->getVk(),
+			m_device->physicalDevice().getVk(),
 			m_swapchain->swapchain->getExtent(),
 			m_swapchain->swapchain->getImageFormat()
 		));
@@ -123,7 +123,7 @@ namespace LIB_NAMESPACE
 
 		m_depthImage = std::make_unique<vk::Image>(vk::Image::createDepthImage(
 			m_device->device->getVk(),
-			m_device->physicalDevice->getVk(),
+			m_device->physicalDevice().getVk(),
 			m_swapchain->swapchain->getExtent(),
 			depthFormat
 		));
@@ -157,7 +157,7 @@ namespace LIB_NAMESPACE
 		for (const auto& format : candidates)
 		{
 			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice->getVk(), format, &props);
+			vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice().getVk(), format, &props);
 
 			if (
 				tiling == VK_IMAGE_TILING_LINEAR &&
@@ -196,7 +196,7 @@ namespace LIB_NAMESPACE
 	{
 		// Check if image format supports linear blitting
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice->getVk(), format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice().getVk(), format, &formatProperties);
 
 		if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
 		{
@@ -572,7 +572,7 @@ namespace LIB_NAMESPACE
 
 		m_meshMap[m_maxMeshID] = std::make_unique<vk::Mesh>(
 			m_device->device->getVk(),
-			m_device->physicalDevice->getVk(),
+			m_device->physicalDevice().getVk(),
 			*m_command.get(),
 			meshInfo
 		);
@@ -602,7 +602,7 @@ namespace LIB_NAMESPACE
 
 		m_textureMap[m_maxTextureID] = std::make_unique<Texture>(
 			m_device->device->getVk(),
-			m_device->physicalDevice->getVk(),
+			m_device->physicalDevice().getVk(),
 			*m_command.get(),
 			createInfo
 		);
@@ -642,14 +642,14 @@ namespace LIB_NAMESPACE
 
 		m_uniformBufferMap[UniformBuffer::maxID] = std::make_unique<UniformBuffer>(
 			m_device->device->getVk(),
-			m_device->physicalDevice->getVk(),
+			m_device->physicalDevice().getVk(),
 			createInfo
 		);
 
 		return UniformBuffer::maxID++;
 		// return m_uniformBufferMap.insert(UniformBuffer(
 		// 	m_device->device->getVk(),
-		// 	m_device->physicalDevice->getVk(),
+		// 	m_device->physicalDevice().getVk(),
 		// 	createInfo
 		// ));
 	}

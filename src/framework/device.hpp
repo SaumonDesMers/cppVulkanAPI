@@ -33,6 +33,9 @@ namespace LIB_NAMESPACE
 		Surface & surface() { return m_surface; }
 		const Surface & surface() const { return m_surface; }
 
+		core::PhysicalDevice & physicalDevice() { return m_physical_device; }
+		const core::PhysicalDevice & physicalDevice() const { return m_physical_device; }
+
 		GLFWwindow *glfwWindow;
 
 		core::Instance m_instance;
@@ -42,7 +45,7 @@ namespace LIB_NAMESPACE
 
 		Surface m_surface;
 
-		std::unique_ptr<core::PhysicalDevice> physicalDevice;
+		core::PhysicalDevice m_physical_device;
 
 		std::unique_ptr<core::Device> device;
 		std::unique_ptr<core::Queue> graphicsQueue;
@@ -59,7 +62,7 @@ namespace LIB_NAMESPACE
 
 		core::InstanceCreateInfo instanceCreateInfo();
 		core::DebugMessengerCreateInfo debugMessengerCreateInfo();
-		void pickPhysicalDevice();
+		VkPhysicalDevice pickPhysicalDevice();
 		void createLogicalDevice();
 
 		std::vector<const char*> getRequiredExtensions();

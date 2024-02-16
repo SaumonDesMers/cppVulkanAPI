@@ -12,9 +12,9 @@ namespace LIB_NAMESPACE
 #ifndef NDEBUG
 		m_debug_messenger(m_instance.getVk(), debugMessengerCreateInfo()),
 #endif
-		m_surface(m_instance.getVk(), glfwWindow)
+		m_surface(m_instance.getVk(), glfwWindow),
+		m_physical_device(pickPhysicalDevice())
 	{
-		pickPhysicalDevice();
 		createLogicalDevice();
 	}
 
@@ -70,7 +70,7 @@ namespace LIB_NAMESPACE
 		return createInfo;
 	}
 
-	void Device::pickPhysicalDevice()
+	VkPhysicalDevice Device::pickPhysicalDevice()
 	{
 		std::vector<VkPhysicalDevice> physicalDevices = m_instance.getPhysicalDevices();
 
@@ -94,12 +94,12 @@ namespace LIB_NAMESPACE
 			throw std::runtime_error("Failed to find a suitable GPU");
 		}
 
-		physicalDevice = std::make_unique<vk::core::PhysicalDevice>(pickedPhysicalDevice);
+		return pickedPhysicalDevice;
 	}
 
 	void Device::createLogicalDevice()
 	{
-		Queue::FamilyIndices indices = findQueueFamilies(physicalDevice->getVk());
+		Queue::FamilyIndices indices = findQueueFamilies(m_physical_device.getVk());
 
 		std::vector<VkDeviceQueueCreateInfo> queueInfos;
 		std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -141,7 +141,7 @@ namespace LIB_NAMESPACE
 			deviceInfo.enabledLayerCount = 0;
 		}
 
-		device = std::make_unique<vk::core::Device>(physicalDevice->getVk(), deviceInfo);
+		device = std::make_unique<vk::core::Device>(m_physical_device.getVk(), deviceInfo);
 
 		graphicsQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.graphicsFamily.value());
 		presentQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.presentFamily.value());
@@ -162,31 +162,31 @@ namespace LIB_NAMESPACE
 		return extensions;
 	}
 
-	bool Device::isDeviceSuitable(const VkPhysicalDevice& physicalDevice)
+	bool Device::isDeviceSuitable(const VkPhysicalDevice& physical_device)
 	{
-		Queue::FamilyIndices indices = findQueueFamilies(physicalDevice);
+		Queue::FamilyIndices indices = findQueueFamilies(physical_device);
 
-		bool extensionsSupported = vk::core::PhysicalDevice::checkExtensionSupport(physicalDevice, deviceExtensions);
+		bool extensionsSupported = vk::core::PhysicalDevice::checkExtensionSupport(physical_device, deviceExtensions);
 
 		bool swapChainAdequate = false;
 		if (extensionsSupported)
 		{
-			Swapchain::SupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+			Swapchain::SupportDetails swapChainSupport = querySwapChainSupport(physical_device);
 			swapChainAdequate = swapChainSupport.formats.empty() == false
 							&&	swapChainSupport.presentModes.empty() == false;
 		}
 
 		VkPhysicalDeviceFeatures supportedFeatures;
-		vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
+		vkGetPhysicalDeviceFeatures(physical_device, &supportedFeatures);
 
 		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
-	Queue::FamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& physicalDevice)
+	Queue::FamilyIndices Device::findQueueFamilies(const VkPhysicalDevice& physical_device)
 	{
 		Queue::FamilyIndices indices;
 
-		std::vector<VkQueueFamilyProperties> queueFamilyProperties = vk::core::PhysicalDevice::getQueueFamilyProperties(physicalDevice);
+		std::vector<VkQueueFamilyProperties> queueFamilyProperties = vk::core::PhysicalDevice::getQueueFamilyProperties(physical_device);
 
 		int i = 0;
 		for (const auto& queueFamily : queueFamilyProperties)
@@ -196,7 +196,7 @@ namespace LIB_NAMESPACE
 				indices.graphicsFamily = i;
 			}
 
-			VkBool32 presentSupport = vk::core::PhysicalDevice::getSurfaceSupport(physicalDevice, i, m_surface.getVk());
+			VkBool32 presentSupport = vk::core::PhysicalDevice::getSurfaceSupport(physical_device, i, m_surface.getVk());
 
 			if (presentSupport)
 			{
@@ -214,21 +214,21 @@ namespace LIB_NAMESPACE
 		return indices;
 	}
 
-	Swapchain::SupportDetails Device::querySwapChainSupport(const VkPhysicalDevice& device)
+	Swapchain::SupportDetails Device::querySwapChainSupport(const VkPhysicalDevice& physical_device)
 	{
 		Swapchain::SupportDetails details;
 
-		details.capabilities = vk::core::PhysicalDevice::getSurfaceCapabilities(device, m_surface.getVk());
-		details.formats = vk::core::PhysicalDevice::getSurfaceFormats(device, m_surface.getVk());
-		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(device, m_surface.getVk());
+		details.capabilities = vk::core::PhysicalDevice::getSurfaceCapabilities(physical_device, m_surface.getVk());
+		details.formats = vk::core::PhysicalDevice::getSurfaceFormats(physical_device, m_surface.getVk());
+		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(physical_device, m_surface.getVk());
 
 		return details;
 	}
 
-	VkSampleCountFlagBits Device::getMaxUsableSampleCount(const VkPhysicalDevice& physicalDevice)
+	VkSampleCountFlagBits Device::getMaxUsableSampleCount(const VkPhysicalDevice& physical_device)
 	{
 		VkPhysicalDeviceProperties physicalDeviceProperties;
-		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+		vkGetPhysicalDeviceProperties(physical_device, &physicalDeviceProperties);
 
 		VkSampleCountFlags counts =
 			physicalDeviceProperties.limits.framebufferColorSampleCounts &
