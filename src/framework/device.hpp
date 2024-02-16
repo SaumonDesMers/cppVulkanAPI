@@ -67,7 +67,6 @@ namespace LIB_NAMESPACE
 
 		std::vector<const char*> getRequiredExtensions();
 		bool isDeviceSuitable(const VkPhysicalDevice& physicalDevice);
-		VkSampleCountFlagBits getMaxUsableSampleCount(const VkPhysicalDevice& physicalDevice);
 
 	};
 }

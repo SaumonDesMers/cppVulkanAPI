@@ -117,31 +117,31 @@ namespace LIB_NAMESPACE
 		vk::core::PhysicalDevice::Features deviceFeatures = {};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-		vk::core::Device::CreateInfo deviceInfo = {};
-		deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
-		deviceInfo.pQueueCreateInfos = queueInfos.data();
-		deviceInfo.pEnabledFeatures = &deviceFeatures;
+		vk::core::Device::CreateInfo createInfo = {};
+		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
+		createInfo.pQueueCreateInfos = queueInfos.data();
+		createInfo.pEnabledFeatures = &deviceFeatures;
 
 		VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures = {};
 		dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
 		dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
 
-		deviceInfo.pNext = &dynamicRenderingFeatures;
+		createInfo.pNext = &dynamicRenderingFeatures;
 
-		deviceInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-		deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 		if (enableValidationLayers)
 		{
-			deviceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-			deviceInfo.ppEnabledLayerNames = validationLayers.data();
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
 		}
 		else
 		{
-			deviceInfo.enabledLayerCount = 0;
+			createInfo.enabledLayerCount = 0;
 		}
 
-		device = std::make_unique<vk::core::Device>(m_physical_device.getVk(), deviceInfo);
+		device = std::make_unique<vk::core::Device>(m_physical_device.getVk(), createInfo);
 
 		graphicsQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.graphicsFamily.value());
 		presentQueue = std::make_unique<vk::core::Queue>(device->getVk(), indices.presentFamily.value());
@@ -186,7 +186,7 @@ namespace LIB_NAMESPACE
 	{
 		Queue::FamilyIndices indices;
 
-		std::vector<VkQueueFamilyProperties> queueFamilyProperties = vk::core::PhysicalDevice::getQueueFamilyProperties(physical_device);
+		std::vector<VkQueueFamilyProperties> queueFamilyProperties = core::PhysicalDevice::getQueueFamilyProperties(physical_device);
 
 		int i = 0;
 		for (const auto& queueFamily : queueFamilyProperties)
@@ -223,25 +223,6 @@ namespace LIB_NAMESPACE
 		details.presentModes = vk::core::PhysicalDevice::getSurfacePresentModes(physical_device, m_surface.getVk());
 
 		return details;
-	}
-
-	VkSampleCountFlagBits Device::getMaxUsableSampleCount(const VkPhysicalDevice& physical_device)
-	{
-		VkPhysicalDeviceProperties physicalDeviceProperties;
-		vkGetPhysicalDeviceProperties(physical_device, &physicalDeviceProperties);
-
-		VkSampleCountFlags counts =
-			physicalDeviceProperties.limits.framebufferColorSampleCounts &
-			physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-
-		if (counts & VK_SAMPLE_COUNT_64_BIT) return VK_SAMPLE_COUNT_64_BIT;
-		if (counts & VK_SAMPLE_COUNT_32_BIT) return VK_SAMPLE_COUNT_32_BIT;
-		if (counts & VK_SAMPLE_COUNT_16_BIT) return VK_SAMPLE_COUNT_16_BIT;
-		if (counts & VK_SAMPLE_COUNT_8_BIT) return VK_SAMPLE_COUNT_8_BIT;
-		if (counts & VK_SAMPLE_COUNT_4_BIT) return VK_SAMPLE_COUNT_4_BIT;
-		if (counts & VK_SAMPLE_COUNT_2_BIT) return VK_SAMPLE_COUNT_2_BIT;
-
-		return VK_SAMPLE_COUNT_1_BIT;
 	}
 
 }
