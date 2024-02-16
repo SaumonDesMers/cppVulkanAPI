@@ -41,16 +41,14 @@ namespace LIB_NAMESPACE
 			VkDevice device,
 			VkPhysicalDevice physicalDevice,
 			VkExtent2D extent,
-			VkFormat format,
-			VkSampleCountFlagBits msaaSamples
+			VkFormat format
 		);
 
 		static Image createColorImage(
 			VkDevice device,
 			VkPhysicalDevice physicalDevice,
 			VkExtent2D extent,
-			VkFormat format,
-			VkSampleCountFlagBits msaaSamples
+			VkFormat format
 		);
 
 	private:

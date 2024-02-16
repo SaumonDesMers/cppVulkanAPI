@@ -61,8 +61,7 @@ namespace LIB_NAMESPACE
 		VkDevice device,
 		VkPhysicalDevice physicalDevice,
 		VkExtent2D extent,
-		VkFormat format,
-		VkSampleCountFlagBits msaaSamples
+		VkFormat format
 	)
 	{
 		VkImageCreateInfo imageInfo = {};
@@ -77,7 +76,7 @@ namespace LIB_NAMESPACE
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageInfo.samples = msaaSamples;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		VkImageViewCreateInfo viewInfo = {};
@@ -98,8 +97,7 @@ namespace LIB_NAMESPACE
 		VkDevice device,
 		VkPhysicalDevice physicalDevice,
 		VkExtent2D extent,
-		VkFormat format,
-		VkSampleCountFlagBits msaaSamples
+		VkFormat format
 	)
 	{
 		VkImageCreateInfo imageInfo{};
@@ -117,7 +115,7 @@ namespace LIB_NAMESPACE
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		imageInfo.samples = msaaSamples;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

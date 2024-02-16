@@ -85,7 +85,6 @@ namespace LIB_NAMESPACE
 			if (isDeviceSuitable(phyDev))
 			{
 				pickedPhysicalDevice = phyDev;
-				msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 				break;
 			}
 		}

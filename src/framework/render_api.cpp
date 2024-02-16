@@ -112,8 +112,7 @@ namespace LIB_NAMESPACE
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
 			m_swapchain->swapchain->getExtent(),
-			m_swapchain->swapchain->getImageFormat(),
-			m_device->msaaSamples
+			m_swapchain->swapchain->getImageFormat()
 		));
 
 	}
@@ -126,8 +125,7 @@ namespace LIB_NAMESPACE
 			m_device->device->getVk(),
 			m_device->physicalDevice->getVk(),
 			m_swapchain->swapchain->getExtent(),
-			depthFormat,
-			m_device->msaaSamples
+			depthFormat
 		));
 	}
 

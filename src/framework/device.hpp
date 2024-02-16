@@ -43,7 +43,6 @@ namespace LIB_NAMESPACE
 		Surface m_surface;
 
 		std::unique_ptr<core::PhysicalDevice> physicalDevice;
-		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		std::unique_ptr<core::Device> device;
 		std::unique_ptr<core::Queue> graphicsQueue;
