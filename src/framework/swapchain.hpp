@@ -2,10 +2,11 @@
 
 #include "defines.hpp"
 #include "queue.hpp"
-#include "core/swapchain.hpp"
-#include "core/image/image_view.hpp"
+
+#include <vulkan/vulkan.h>
 
 #include <memory>
+#include <vector>
 
 namespace LIB_NAMESPACE
 {
@@ -14,25 +15,46 @@ namespace LIB_NAMESPACE
 
 	public:
 
+		struct SupportDetails
+		{
+			VkSurfaceCapabilitiesKHR capabilities;
+			std::vector<VkSurfaceFormatKHR> formats;
+			std::vector<VkPresentModeKHR> presentModes;
+		};
+
 		struct CreateInfo
 		{
 			VkSurfaceKHR surface;
-			core::Swapchain::SupportDetails supportDetails;
-			VkExtent2D frameBufferExtent;
-			core::Queue::FamilyIndices queueFamilyIndices;
-			VkSwapchainKHR oldSwapchain;
+			Swapchain::SupportDetails support_details;
+			VkExtent2D extent;
+			core::Queue::FamilyIndices queue_family_indices;
+			VkSwapchainKHR old_swapchain;
 		};
-
-		std::unique_ptr<vk::core::Swapchain> swapchain;
-		std::vector<std::unique_ptr<vk::core::ImageView>> imageViews;
 
 		Swapchain(VkDevice device, const CreateInfo& createInfo);
 		~Swapchain();
 
+		VkSwapchainKHR getVk() const { return m_swapchain; }
+
+		VkImage image(uint32_t index) const { return m_images[index]; }
+		uint32_t imageCount() const { return m_images.size(); }
+		VkFormat imageFormat() const { return m_imageFormat; }
+		VkExtent2D extent() const { return m_extent; }
+
+		VkResult acquireNextImage(uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* imageIndex);
+
+
 	private:
 
-		void createSwapchain(VkDevice device, const CreateInfo& createInfo);
-		void createImageViews(VkDevice device);
+		VkSwapchainKHR m_swapchain;
+
+		VkDevice m_device;
+
+		std::vector<VkImage> m_images;
+		VkFormat m_imageFormat;
+		VkExtent2D m_extent;
+
+		void createSwapchain(const CreateInfo& createInfo);
 
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

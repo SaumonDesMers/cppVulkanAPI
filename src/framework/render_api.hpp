@@ -86,7 +86,7 @@ namespace LIB_NAMESPACE
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 
-		std::unique_ptr<vk::Device> m_device;
+		Device m_device;
 
 		std::unique_ptr<vk::Swapchain> m_swapchain;
 
@@ -121,9 +121,7 @@ namespace LIB_NAMESPACE
 
 		std::mutex m_global_mutex;
 
-		void init(GLFWwindow *glfwWindow);
 
-		void createDevice(GLFWwindow *glfwWindow);
 		void createSwapchain();
 		void recreateSwapChain();
 		void createCommandPool();

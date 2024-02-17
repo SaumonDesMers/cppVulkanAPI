@@ -47,7 +47,7 @@ namespace LIB_NAMESPACE
 		Device(GLFWwindow *glfwWindow);
 		~Device();
 
-		core::Swapchain::SupportDetails querySwapChainSupport(const VkPhysicalDevice&  physical_device);
+		Swapchain::SupportDetails querySwapChainSupport(const VkPhysicalDevice&  physical_device);
 
 		GLFWwindow *glfwWindow;
 

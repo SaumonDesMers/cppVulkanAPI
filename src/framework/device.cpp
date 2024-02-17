@@ -41,7 +41,7 @@ namespace LIB_NAMESPACE
 		return extensions;
 	}
 
-	core::Swapchain::SupportDetails Device::querySwapChainSupport(const VkPhysicalDevice & physical_device)
+	Swapchain::SupportDetails Device::querySwapChainSupport(const VkPhysicalDevice & physical_device)
 	{
 		return core::PhysicalDevice::querySwapChainSupport(physical_device, m_surface.getVk());
 	}

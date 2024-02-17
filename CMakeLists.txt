@@ -28,7 +28,6 @@ target_sources(${PROJECT_NAME}
 		src/core/physical_device.cpp
 		src/core/logical_device.cpp
 		src/core/queue.cpp
-		src/core/swapchain.cpp
 		src/core/image/image.cpp
 		src/core/image/image_view.cpp
 		src/core/image/sampler.cpp

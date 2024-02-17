@@ -14,24 +14,9 @@
 namespace LIB_NAMESPACE
 {
 
-	RenderAPI::RenderAPI(GLFWwindow *glfwWindow)
+	RenderAPI::RenderAPI(GLFWwindow *glfwWindow):
+		m_device(glfwWindow)
 	{
-		init(glfwWindow);
-	}
-
-	RenderAPI::~RenderAPI()
-	{
-		m_device->device().waitIdle();
-
-		for (auto& vkCommandBuffer : m_vkCommandBuffers)
-		{
-			m_command->freeCommandBuffer(vkCommandBuffer);
-		}
-	}
-
-	void RenderAPI::init(GLFWwindow *glfwWindow)
-	{
-		createDevice(glfwWindow);
 		createSwapchain();
 		createColorResources();
 		createDepthResources();
@@ -39,62 +24,63 @@ namespace LIB_NAMESPACE
 		createSyncObjects();
 	}
 
-
-	void RenderAPI::createDevice(GLFWwindow *glfwWindow)
+	RenderAPI::~RenderAPI()
 	{
-		m_device = std::make_unique<vk::Device>(glfwWindow);
+		m_device.device().waitIdle();
+
+		for (auto& vkCommandBuffer : m_vkCommandBuffers)
+		{
+			m_command->freeCommandBuffer(vkCommandBuffer);
+		}
 	}
+
 
 	void RenderAPI::createSwapchain()
 	{
 		vk::Swapchain::CreateInfo swapchainInfo = {};
-		swapchainInfo.surface = m_device->surface().getVk();
-		swapchainInfo.supportDetails = m_device->querySwapChainSupport(m_device->physicalDevice().getVk());
+		swapchainInfo.surface = m_device.surface().getVk();
+		swapchainInfo.support_details = m_device.querySwapChainSupport(m_device.physicalDevice().getVk());
 
 		int width, height;
-		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
-		swapchainInfo.frameBufferExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+		glfwGetFramebufferSize(m_device.glfwWindow, &width, &height);
+		swapchainInfo.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
-		swapchainInfo.queueFamilyIndices = m_device->physicalDevice().queueFamilyIndices();
+		swapchainInfo.queue_family_indices = m_device.physicalDevice().queueFamilyIndices();
 
-		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+		swapchainInfo.old_swapchain = VK_NULL_HANDLE;
 
-		m_swapchain = std::make_unique<vk::Swapchain>(m_device->device().getVk(), swapchainInfo);
+		m_swapchain = std::make_unique<vk::Swapchain>(m_device.device().getVk(), swapchainInfo);
 	}
 
 	void RenderAPI::recreateSwapChain()
 	{
 		int width = 0, height = 0;
-		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
+		glfwGetFramebufferSize(m_device.glfwWindow, &width, &height);
 		while (width == 0 || height == 0)
 		{
-			glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
+			glfwGetFramebufferSize(m_device.glfwWindow, &width, &height);
 			glfwWaitEvents();
 		}
 
-		std::cout << "recreate swapchain" << std::endl;
-
-		m_device->device().waitIdle();
+		m_device.device().waitIdle();
 
 		m_colorImage.reset();
 		m_depthImage.reset();
 		m_swapchain.reset();
 
-
 		createSwapchain();
 		createColorResources();
 		createDepthResources();
-
 	}
 
 	void RenderAPI::createCommandPool()
 	{
 		Command::CreateInfo commandInfo{};
-		commandInfo.queueFamilyIndex = m_device->physicalDevice().queueFamilyIndices().graphicsFamily.value();
-		commandInfo.queue = m_device->graphicsQueue().getVk();
+		commandInfo.queueFamilyIndex = m_device.physicalDevice().queueFamilyIndices().graphicsFamily.value();
+		commandInfo.queue = m_device.graphicsQueue().getVk();
 		commandInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		m_command = std::make_unique<Command>(m_device->device().getVk(), commandInfo);
+		m_command = std::make_unique<Command>(m_device.device().getVk(), commandInfo);
 
 		m_vkCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -106,10 +92,10 @@ namespace LIB_NAMESPACE
 	void RenderAPI::createColorResources()
 	{
 		m_colorImage = std::make_unique<vk::Image>(vk::Image::createColorImage(
-			m_device->device().getVk(),
-			m_device->physicalDevice().getVk(),
-			m_swapchain->swapchain->getExtent(),
-			m_swapchain->swapchain->getImageFormat()
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
+			m_swapchain->extent(),
+			m_swapchain->imageFormat()
 		));
 
 	}
@@ -119,9 +105,9 @@ namespace LIB_NAMESPACE
 		VkFormat depthFormat = findDepthFormat();
 
 		m_depthImage = std::make_unique<vk::Image>(vk::Image::createDepthImage(
-			m_device->device().getVk(),
-			m_device->physicalDevice().getVk(),
-			m_swapchain->swapchain->getExtent(),
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
+			m_swapchain->extent(),
 			depthFormat
 		));
 	}
@@ -140,10 +126,10 @@ namespace LIB_NAMESPACE
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
-			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
-			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
-			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device->device().getVk(), fenceInfo);
+			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device.device().getVk(), fenceInfo);
 		}
 
 	}
@@ -154,7 +140,7 @@ namespace LIB_NAMESPACE
 		for (const auto& format : candidates)
 		{
 			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice().getVk(), format, &props);
+			vkGetPhysicalDeviceFormatProperties(m_device.physicalDevice().getVk(), format, &props);
 
 			if (
 				tiling == VK_IMAGE_TILING_LINEAR &&
@@ -193,7 +179,7 @@ namespace LIB_NAMESPACE
 	{
 		// Check if image format supports linear blitting
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(m_device->physicalDevice().getVk(), format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(m_device.physicalDevice().getVk(), format, &formatProperties);
 
 		if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
 		{
@@ -302,7 +288,7 @@ namespace LIB_NAMESPACE
 
 		// First, we need to transition the swap chain image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL layout, so we can copy the offscreen image to it.
 		m_command->transitionImageLayout(
-			m_swapchain->swapchain->getImage(swapchainImageIndex),
+			m_swapchain->image(swapchainImageIndex),
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -331,8 +317,8 @@ namespace LIB_NAMESPACE
 
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {
-			static_cast<int32_t>(m_swapchain->swapchain->getExtent().width),
-			static_cast<int32_t>(m_swapchain->swapchain->getExtent().height),
+			static_cast<int32_t>(m_swapchain->extent().width),
+			static_cast<int32_t>(m_swapchain->extent().height),
 			1
 		};
 		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -344,7 +330,7 @@ namespace LIB_NAMESPACE
 			commandBuffer,
 			m_colorImage->image(),
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			m_swapchain->swapchain->getImage(swapchainImageIndex),
+			m_swapchain->image(swapchainImageIndex),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
 			&blit,
@@ -387,7 +373,7 @@ namespace LIB_NAMESPACE
 
 		// Now we need to transition the swap chain image to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR layout, so we can present it.
 		m_command->transitionImageLayout(
-			m_swapchain->swapchain->getImage(swapchainImageIndex),
+			m_swapchain->image(swapchainImageIndex),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -503,14 +489,14 @@ namespace LIB_NAMESPACE
 		renderInfo.signalSemaphoreCount = 1;
 		renderInfo.pSignalSemaphores = signalSemaphores;
 
-		m_device->graphicsQueue().submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
+		m_device.graphicsQueue().submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
 
 
 
 		// Now instead of rendering directly to the swap chain image, we render to the offscreen image, and then copy it to the swap chain image.
 
 		uint32_t imageIndex;
-		VkResult result = m_swapchain->swapchain->acquireNextImage(
+		VkResult result = m_swapchain->acquireNextImage(
 			UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame]->getVk(), VK_NULL_HANDLE, &imageIndex
 		);
 
@@ -536,12 +522,12 @@ namespace LIB_NAMESPACE
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = copyImageSignalSemaphores;
 
-		VkSwapchainKHR swapChains[] = {m_swapchain->swapchain->getVk()};
+		VkSwapchainKHR swapChains[] = {m_swapchain->getVk()};
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapChains;
 		presentInfo.pImageIndices = &imageIndex;
 
-		result = vkQueuePresentKHR(m_device->presentQueue().getVk(), &presentInfo);
+		result = vkQueuePresentKHR(m_device.presentQueue().getVk(), &presentInfo);
 
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_framebufferResized)
@@ -568,8 +554,8 @@ namespace LIB_NAMESPACE
 		vk::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
 
 		m_meshMap[m_maxMeshID] = std::make_unique<vk::Mesh>(
-			m_device->device().getVk(),
-			m_device->physicalDevice().getVk(),
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
 			*m_command.get(),
 			meshInfo
 		);
@@ -586,7 +572,7 @@ namespace LIB_NAMESPACE
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 		m_descriptorMap[Descriptor::maxID] = std::make_unique<Descriptor>(
-			m_device->device().getVk(),
+			m_device.device().getVk(),
 			descriptorInfo
 		);
 
@@ -598,8 +584,8 @@ namespace LIB_NAMESPACE
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		m_textureMap[m_maxTextureID] = std::make_unique<Texture>(
-			m_device->device().getVk(),
-			m_device->physicalDevice().getVk(),
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
 			*m_command.get(),
 			createInfo
 		);
@@ -628,7 +614,7 @@ namespace LIB_NAMESPACE
 
 		createInfo.pNext = &renderingInfo;
 
-		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device->device().getVk(), createInfo);
+		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device.device().getVk(), createInfo);
 
 		return Pipeline::maxID++;
 	}
@@ -638,15 +624,15 @@ namespace LIB_NAMESPACE
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		m_uniformBufferMap[UniformBuffer::maxID] = std::make_unique<UniformBuffer>(
-			m_device->device().getVk(),
-			m_device->physicalDevice().getVk(),
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
 			createInfo
 		);
 
 		return UniformBuffer::maxID++;
 		// return m_uniformBufferMap.insert(UniformBuffer(
-		// 	m_device->device().getVk(),
-		// 	m_device->physicalDevice().getVk(),
+		// 	m_device.device().getVk(),
+		// 	m_device.physicalDevice().getVk(),
 		// 	createInfo
 		// ));
 	}
@@ -733,7 +719,7 @@ namespace LIB_NAMESPACE
 
 	GLFWwindow* RenderAPI::getWindow()
 	{
-		return m_device->glfwWindow;
+		return m_device.glfwWindow;
 	}
 
 	uint32_t RenderAPI::currentFrame()

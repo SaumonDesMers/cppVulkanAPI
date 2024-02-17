@@ -7,7 +7,6 @@
 #include "../src/core/physical_device.hpp"
 #include "../src/core/logical_device.hpp"
 #include "../src/core/queue.hpp"
-#include "../src/core/swapchain.hpp"
 #include "../src/core/image/image.hpp"
 #include "../src/core/image/image_view.hpp"
 #include "../src/core/image/sampler.hpp"

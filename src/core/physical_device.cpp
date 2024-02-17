@@ -66,7 +66,7 @@ namespace LIB_NAMESPACE
 			bool swapChainAdequate = false;
 			if (extensionsSupported)
 			{
-				core::Swapchain::SupportDetails swapChainSupport = querySwapChainSupport(physical_device, surface);
+				Swapchain::SupportDetails swapChainSupport = querySwapChainSupport(physical_device, surface);
 				swapChainAdequate = swapChainSupport.formats.empty() == false
 								&&	swapChainSupport.presentModes.empty() == false;
 			}
@@ -112,12 +112,12 @@ namespace LIB_NAMESPACE
 			return indices;
 		}
 
-		core::Swapchain::SupportDetails PhysicalDevice::querySwapChainSupport(
+		Swapchain::SupportDetails PhysicalDevice::querySwapChainSupport(
 			const VkPhysicalDevice & physical_device,
 			const VkSurfaceKHR & surface
 		)
 		{
-			core::Swapchain::SupportDetails details;
+			Swapchain::SupportDetails details;
 
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &details.capabilities);
 			

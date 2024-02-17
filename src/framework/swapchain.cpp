@@ -1,40 +1,34 @@
 #include "swapchain.hpp"
 
 #include <algorithm>
+#include <stdexcept>
+#include <iostream>
 
 namespace LIB_NAMESPACE
 {
-	Swapchain::Swapchain(VkDevice device, const CreateInfo& createInfo)
+	Swapchain::Swapchain(VkDevice device, const CreateInfo& createInfo):
+		m_device(device)
 	{
-		createSwapchain(device, createInfo);
-		createImageViews(device);
-	}
-
-	Swapchain::~Swapchain()
-	{
-	}
-
-	void Swapchain::createSwapchain(VkDevice device, const CreateInfo& createInfo)
-	{
-		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(createInfo.supportDetails.formats);
-		VkPresentModeKHR presentMode = chooseSwapPresentMode(createInfo.supportDetails.presentModes);
+		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(createInfo.support_details.formats);
+		VkPresentModeKHR presentMode = chooseSwapPresentMode(createInfo.support_details.presentModes);
 		VkExtent2D extent = chooseSwapExtent(
-			createInfo.supportDetails.capabilities,
-			createInfo.frameBufferExtent.width, 
-			createInfo.frameBufferExtent.height
+			createInfo.support_details.capabilities,
+			createInfo.extent.width, 
+			createInfo.extent.height
 		);
 
-		uint32_t imageCount = createInfo.supportDetails.capabilities.minImageCount + 1;
+		uint32_t imageCount = createInfo.support_details.capabilities.minImageCount + 1;
 
 		if (
-			createInfo.supportDetails.capabilities.maxImageCount > 0
-			&& imageCount > createInfo.supportDetails.capabilities.maxImageCount
+			createInfo.support_details.capabilities.maxImageCount > 0
+			&& imageCount > createInfo.support_details.capabilities.maxImageCount
 		)
 		{
-			imageCount = createInfo.supportDetails.capabilities.maxImageCount;
+			imageCount = createInfo.support_details.capabilities.maxImageCount;
 		}
 
-		vk::core::Swapchain::CreateInfo swapchainInfo = {};
+		VkSwapchainCreateInfoKHR swapchainInfo = {};
+		swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainInfo.surface = createInfo.surface;
 		swapchainInfo.minImageCount = imageCount;
 		swapchainInfo.imageFormat = surfaceFormat.format;
@@ -46,11 +40,11 @@ namespace LIB_NAMESPACE
 			VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		uint32_t queueFamilyIndices[] = {
-			createInfo.queueFamilyIndices.graphicsFamily.value(),
-			createInfo.queueFamilyIndices.presentFamily.value()
+			createInfo.queue_family_indices.graphicsFamily.value(),
+			createInfo.queue_family_indices.presentFamily.value()
 		};
 
-		if (createInfo.queueFamilyIndices.graphicsFamily != createInfo.queueFamilyIndices.presentFamily)
+		if (createInfo.queue_family_indices.graphicsFamily != createInfo.queue_family_indices.presentFamily)
 		{
 			swapchainInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 			swapchainInfo.queueFamilyIndexCount = 2;
@@ -61,38 +55,34 @@ namespace LIB_NAMESPACE
 			swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		}
 
-		swapchainInfo.preTransform = createInfo.supportDetails.capabilities.currentTransform;
+		swapchainInfo.preTransform = createInfo.support_details.capabilities.currentTransform;
 		swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		swapchainInfo.presentMode = presentMode;
 		swapchainInfo.clipped = VK_TRUE;
 
-		swapchainInfo.oldSwapchain = createInfo.oldSwapchain;
+		swapchainInfo.oldSwapchain = createInfo.old_swapchain;
 
-		swapchain = std::make_unique<vk::core::Swapchain>(device, swapchainInfo);
+		if (vkCreateSwapchainKHR(m_device, &swapchainInfo, nullptr, &m_swapchain) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create swap chain.");
+		}
+
+		vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
+		m_images.resize(imageCount);
+		vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, m_images.data());
+
+		m_imageFormat = swapchainInfo.imageFormat;
+		m_extent = swapchainInfo.imageExtent;
 	}
 
-	void Swapchain::createImageViews(VkDevice device)
+	Swapchain::~Swapchain()
 	{
-		imageViews.resize(swapchain->getImageCount());
+		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+	}
 
-		for (size_t i = 0; i < swapchain->getImageCount(); i++)
-		{
-			vk::core::ImageView::CreateInfo imageViewInfo = {};
-			imageViewInfo.image = swapchain->getImage(i);
-			imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			imageViewInfo.format = swapchain->getImageFormat();
-			imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-			imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageViewInfo.subresourceRange.baseMipLevel = 0;
-			imageViewInfo.subresourceRange.levelCount = 1;
-			imageViewInfo.subresourceRange.baseArrayLayer = 0;
-			imageViewInfo.subresourceRange.layerCount = 1;
-
-			imageViews[i] = std::make_unique<vk::core::ImageView>(device, imageViewInfo);
-		}
+	VkResult Swapchain::acquireNextImage(uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* imageIndex)
+	{
+		return vkAcquireNextImageKHR(m_device, m_swapchain, timeout, semaphore, fence, imageIndex);
 	}
 
 
