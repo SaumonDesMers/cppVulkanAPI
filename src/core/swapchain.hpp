@@ -16,6 +16,13 @@ namespace LIB_NAMESPACE
 		
 		public:
 
+			struct SupportDetails
+			{
+				VkSurfaceCapabilitiesKHR capabilities;
+				std::vector<VkSurfaceFormatKHR> formats;
+				std::vector<VkPresentModeKHR> presentModes;
+			};
+
 			struct CreateInfo: public VkSwapchainCreateInfoKHR
 			{
 				CreateInfo(): VkSwapchainCreateInfoKHR()

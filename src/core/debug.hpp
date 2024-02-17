@@ -1,7 +1,6 @@
 #pragma once
 
 #include "defines.hpp"
-#include "instance.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -35,12 +34,16 @@ namespace LIB_NAMESPACE
 
 		public:
 
+			DebugMessenger(VkInstance instance);
+
 			DebugMessenger(
 				VkInstance instance,
 				const VkDebugUtilsMessengerCreateInfoEXT & createInfo
 			);
 
 			~DebugMessenger();
+
+			static VkDebugUtilsMessengerCreateInfoEXT defaultCreateInfo();
 		
 		private:
 

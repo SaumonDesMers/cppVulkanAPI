@@ -3,6 +3,7 @@
 #include "defines.hpp"
 #include "instance.hpp"
 #include "queue.hpp"
+#include "swapchain.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -17,53 +18,39 @@ namespace LIB_NAMESPACE
 
 		public:
 
-			struct Properties: public VkPhysicalDeviceProperties
-			{
-				Properties() : VkPhysicalDeviceProperties() {}
-
-				Properties(const VkPhysicalDevice& physicalDevice)
-				{
-					vkGetPhysicalDeviceProperties(physicalDevice, this);
-				}
-			};
-
-			struct Features: public VkPhysicalDeviceFeatures
-			{
-				Features() : VkPhysicalDeviceFeatures() {}
-
-				Features(const VkPhysicalDevice& physicalDevice)
-					: VkPhysicalDeviceFeatures()
-				{
-					vkGetPhysicalDeviceFeatures(physicalDevice, this);
-				}
-			};
+			PhysicalDevice(
+				VkInstance instance,
+				const std::vector<const char*> & device_extensions,
+				const VkSurfaceKHR & surface
+			);
 
 			PhysicalDevice(VkPhysicalDevice physicalDevice);
 
 			~PhysicalDevice();
 
-			VkPhysicalDevice getVk() const { return m_physicalDevice; }
+			VkPhysicalDevice getVk() const { return m_physical_device; }
+
+			core::Queue::FamilyIndices queueFamilyIndices() const { return queue_family_indices; }
+
+			bool isDeviceSuitable(
+				const VkPhysicalDevice & physical_device,
+				const std::vector<const char*> & device_extensions,
+				const VkSurfaceKHR & surface
+			);
+			static Swapchain::SupportDetails querySwapChainSupport(
+				const VkPhysicalDevice& physical_device,
+				const VkSurfaceKHR& surface
+			);
+			static core::Queue::FamilyIndices findQueueFamilies(
+				const VkPhysicalDevice & physical_device,
+				const VkSurfaceKHR & surface
+			);
 
 			static std::vector<VkQueueFamilyProperties> getQueueFamilyProperties(VkPhysicalDevice physicalDevice);
 
 			static bool getSurfaceSupport(
 				VkPhysicalDevice physicalDevice,
 				uint32_t queueFamilyIndex,
-				VkSurfaceKHR surface
-			);
-
-			static VkSurfaceCapabilitiesKHR getSurfaceCapabilities(
-				VkPhysicalDevice physicalDevice,
-				VkSurfaceKHR surface
-			);
-
-			static std::vector<VkSurfaceFormatKHR> getSurfaceFormats(
-				VkPhysicalDevice physicalDevice,
-				VkSurfaceKHR surface
-			);
-
-			static std::vector<VkPresentModeKHR> getSurfacePresentModes(
-				VkPhysicalDevice physicalDevice,
 				VkSurfaceKHR surface
 			);
 
@@ -74,9 +61,12 @@ namespace LIB_NAMESPACE
 
 			void getProperties(VkPhysicalDeviceProperties* properties) const;
 
+
 		private:
 
-			VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+			VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
+
+			core::Queue::FamilyIndices queue_family_indices;
 
 		};
 	}

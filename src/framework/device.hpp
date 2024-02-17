@@ -3,7 +3,6 @@
 #include "defines.hpp"
 #include "window/surface.hpp"
 #include "core/instance/instance.hpp"
-#include "core/instance/instance_create_info.hpp"
 #include "core/debug.hpp"
 #include "core/physical_device.hpp"
 #include "core/logical_device.hpp"
@@ -21,11 +20,11 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		const std::vector<const char*> validationLayers = {
+		const std::vector<const char*> validation_layers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
 
-		const std::vector<const char*> deviceExtensions = {
+		const std::vector<const char*> device_extensions = {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 			VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
 		};
@@ -36,7 +35,23 @@ namespace LIB_NAMESPACE
 		core::PhysicalDevice & physicalDevice() { return m_physical_device; }
 		const core::PhysicalDevice & physicalDevice() const { return m_physical_device; }
 
+		core::Device & device() { return m_device; }
+		const core::Device & device() const { return m_device; }
+
+		core::Queue & graphicsQueue() { return m_graphicsQueue; }
+		const core::Queue & graphicsQueue() const { return m_graphicsQueue; }
+
+		core::Queue & presentQueue() { return m_presentQueue; }
+		const core::Queue & presentQueue() const { return m_presentQueue; }
+
+		Device(GLFWwindow *glfwWindow);
+		~Device();
+
+		core::Swapchain::SupportDetails querySwapChainSupport(const VkPhysicalDevice&  physical_device);
+
 		GLFWwindow *glfwWindow;
+
+	private:
 
 		core::Instance m_instance;
 #ifndef NDEBUG
@@ -47,26 +62,11 @@ namespace LIB_NAMESPACE
 
 		core::PhysicalDevice m_physical_device;
 
-		std::unique_ptr<core::Device> device;
-		std::unique_ptr<core::Queue> graphicsQueue;
-		std::unique_ptr<core::Queue> presentQueue;
-
-
-		Device(GLFWwindow *glfwWindow);
-		~Device();
-
-		Swapchain::SupportDetails querySwapChainSupport(const VkPhysicalDevice& device);
-		Queue::FamilyIndices findQueueFamilies(const VkPhysicalDevice& physicalDevice);
-
-	private:
-
-		core::InstanceCreateInfo instanceCreateInfo();
-		core::DebugMessengerCreateInfo debugMessengerCreateInfo();
-		VkPhysicalDevice pickPhysicalDevice();
-		void createLogicalDevice();
+		core::Device m_device;
+		core::Queue m_graphicsQueue;
+		core::Queue m_presentQueue;
 
 		std::vector<const char*> getRequiredExtensions();
-		bool isDeviceSuitable(const VkPhysicalDevice& physicalDevice);
 
 	};
 }

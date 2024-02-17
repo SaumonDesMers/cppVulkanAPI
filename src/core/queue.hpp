@@ -4,6 +4,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <optional>
+
 namespace LIB_NAMESPACE
 {
 	namespace core
@@ -18,6 +20,17 @@ namespace LIB_NAMESPACE
 				CreateInfo(): VkDeviceQueueCreateInfo()
 				{
 					sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				}
+			};
+
+			struct FamilyIndices
+			{
+				std::optional<uint32_t> graphicsFamily;
+				std::optional<uint32_t> presentFamily;
+
+				bool isComplete()
+				{
+					return graphicsFamily.has_value() && presentFamily.has_value();
 				}
 			};
 

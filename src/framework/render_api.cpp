@@ -21,7 +21,7 @@ namespace LIB_NAMESPACE
 
 	RenderAPI::~RenderAPI()
 	{
-		m_device->device->waitIdle();
+		m_device->device().waitIdle();
 
 		for (auto& vkCommandBuffer : m_vkCommandBuffers)
 		{
@@ -55,11 +55,11 @@ namespace LIB_NAMESPACE
 		glfwGetFramebufferSize(m_device->glfwWindow, &width, &height);
 		swapchainInfo.frameBufferExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
-		swapchainInfo.queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice().getVk());
+		swapchainInfo.queueFamilyIndices = m_device->physicalDevice().queueFamilyIndices();
 
 		swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		m_swapchain = std::make_unique<vk::Swapchain>(m_device->device->getVk(), swapchainInfo);
+		m_swapchain = std::make_unique<vk::Swapchain>(m_device->device().getVk(), swapchainInfo);
 	}
 
 	void RenderAPI::recreateSwapChain()
@@ -74,7 +74,7 @@ namespace LIB_NAMESPACE
 
 		std::cout << "recreate swapchain" << std::endl;
 
-		m_device->device->waitIdle();
+		m_device->device().waitIdle();
 
 		m_colorImage.reset();
 		m_depthImage.reset();
@@ -89,15 +89,12 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createCommandPool()
 	{
-		vk::Queue::FamilyIndices queueFamilyIndices = m_device->findQueueFamilies(m_device->physicalDevice().getVk());
-
-		vk::Command::CreateInfo commandInfo{};
-		commandInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-		commandInfo.queue = m_device->graphicsQueue->getVk();
+		Command::CreateInfo commandInfo{};
+		commandInfo.queueFamilyIndex = m_device->physicalDevice().queueFamilyIndices().graphicsFamily.value();
+		commandInfo.queue = m_device->graphicsQueue().getVk();
 		commandInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		m_command = std::make_unique<vk::Command>(m_device->device->getVk(), commandInfo);
-
+		m_command = std::make_unique<Command>(m_device->device().getVk(), commandInfo);
 
 		m_vkCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -109,7 +106,7 @@ namespace LIB_NAMESPACE
 	void RenderAPI::createColorResources()
 	{
 		m_colorImage = std::make_unique<vk::Image>(vk::Image::createColorImage(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			m_device->physicalDevice().getVk(),
 			m_swapchain->swapchain->getExtent(),
 			m_swapchain->swapchain->getImageFormat()
@@ -122,7 +119,7 @@ namespace LIB_NAMESPACE
 		VkFormat depthFormat = findDepthFormat();
 
 		m_depthImage = std::make_unique<vk::Image>(vk::Image::createDepthImage(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			m_device->physicalDevice().getVk(),
 			m_swapchain->swapchain->getExtent(),
 			depthFormat
@@ -143,10 +140,10 @@ namespace LIB_NAMESPACE
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device->getVk(), semaphoreInfo);
-			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device->device->getVk(), fenceInfo);
+			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
+			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
+			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device->device().getVk(), semaphoreInfo);
+			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device->device().getVk(), fenceInfo);
 		}
 
 	}
@@ -506,7 +503,7 @@ namespace LIB_NAMESPACE
 		renderInfo.signalSemaphoreCount = 1;
 		renderInfo.pSignalSemaphores = signalSemaphores;
 
-		m_device->graphicsQueue->submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
+		m_device->graphicsQueue().submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
 
 
 
@@ -544,7 +541,7 @@ namespace LIB_NAMESPACE
 		presentInfo.pSwapchains = swapChains;
 		presentInfo.pImageIndices = &imageIndex;
 
-		result = vkQueuePresentKHR(m_device->presentQueue->getVk(), &presentInfo);
+		result = vkQueuePresentKHR(m_device->presentQueue().getVk(), &presentInfo);
 
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_framebufferResized)
@@ -571,7 +568,7 @@ namespace LIB_NAMESPACE
 		vk::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
 
 		m_meshMap[m_maxMeshID] = std::make_unique<vk::Mesh>(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			m_device->physicalDevice().getVk(),
 			*m_command.get(),
 			meshInfo
@@ -589,7 +586,7 @@ namespace LIB_NAMESPACE
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 		m_descriptorMap[Descriptor::maxID] = std::make_unique<Descriptor>(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			descriptorInfo
 		);
 
@@ -601,7 +598,7 @@ namespace LIB_NAMESPACE
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		m_textureMap[m_maxTextureID] = std::make_unique<Texture>(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			m_device->physicalDevice().getVk(),
 			*m_command.get(),
 			createInfo
@@ -631,7 +628,7 @@ namespace LIB_NAMESPACE
 
 		createInfo.pNext = &renderingInfo;
 
-		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device->device->getVk(), createInfo);
+		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device->device().getVk(), createInfo);
 
 		return Pipeline::maxID++;
 	}
@@ -641,14 +638,14 @@ namespace LIB_NAMESPACE
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		m_uniformBufferMap[UniformBuffer::maxID] = std::make_unique<UniformBuffer>(
-			m_device->device->getVk(),
+			m_device->device().getVk(),
 			m_device->physicalDevice().getVk(),
 			createInfo
 		);
 
 		return UniformBuffer::maxID++;
 		// return m_uniformBufferMap.insert(UniformBuffer(
-		// 	m_device->device->getVk(),
+		// 	m_device->device().getVk(),
 		// 	m_device->physicalDevice().getVk(),
 		// 	createInfo
 		// ));

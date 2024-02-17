@@ -24,14 +24,18 @@ namespace LIB_NAMESPACE
 				}
 			};
 
-			Instance(const VkInstanceCreateInfo & createInfo);
+			Instance(
+				const std::vector<const char*> & enabled_layer_names,
+				const std::vector<const char*> & enabled_extension_names
+			);
+			Instance(const VkInstanceCreateInfo & create_info);
 			~Instance();
 
 			VkInstance getVk() const { return m_instance; }
 
 			std::vector<VkPhysicalDevice> getPhysicalDevices() const;
 
-			static bool checkValidationLayerSupport(const std::vector<const char*>& validationLayers);
+			static bool checkValidationLayerSupport(const std::vector<const char*> & validation_layers);
 
 		private:
 

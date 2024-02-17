@@ -8,12 +8,17 @@
 #	define LIB_NAMESPACE vk
 #endif
 
-#ifdef NDEBUG
-	const bool enableValidationLayers = false;
-#else
-	const bool enableValidationLayers = true;
-#endif
+// #define NDEBUG
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 #define TROW(message, vkResult) throw std::runtime_error(std::string(message) + " (" + std::string(string_VkResult(vkResult)) + ")");
+
+#define VK_CHECK(function, message) \
+	{ \
+		VkResult result = function; \
+		if (result != VK_SUCCESS) \
+		{ \
+			TROW(message, result); \
+		} \
+	}
