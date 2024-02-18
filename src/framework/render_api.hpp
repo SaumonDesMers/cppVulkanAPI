@@ -44,7 +44,7 @@ namespace LIB_NAMESPACE
 		Pipeline::ID createPipeline(Pipeline::CreateInfo& createInfo);
 		Descriptor::ID createDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
 		Texture::ID loadTexture(Texture::CreateInfo& createInfo);
-		UniformBuffer::ID createUniformBuffer(UniformBuffer::CreateInfo& createInfo);
+		uint64_t createUniformBuffer(const UniformBuffer::CreateInfo & create_info);
 
 		// function to start recording a command buffer
 		void startDraw();
@@ -74,7 +74,9 @@ namespace LIB_NAMESPACE
 		std::unique_ptr<vk::Mesh>& getMesh(Mesh::ID meshID);
 		std::unique_ptr<vk::Descriptor>& getDescriptor(Descriptor::ID descriptorID);
 		std::unique_ptr<Texture>& getTexture(Texture::ID textureID);
+
 		std::unique_ptr<vk::UniformBuffer>& getUniformBuffer(UniformBuffer::ID uniformBufferID);
+		UniformBuffer & getUniformBuffer(uint64_t uniform_buffer_id);
 
 	private:
 
@@ -112,8 +114,7 @@ namespace LIB_NAMESPACE
 		Texture::ID m_maxTextureID;
 		std::map<Texture::ID, std::unique_ptr<Texture>> m_textureMap;
 
-		std::map<UniformBuffer::ID, std::unique_ptr<vk::UniformBuffer>> m_uniformBufferMap;
-		// vk::Map<vk::UniformBuffer> m_uniformBufferMap;
+		vk::Map<vk::UniformBuffer> m_uniform_buffer_map;
 
 		bool m_framebufferResized = false;
 

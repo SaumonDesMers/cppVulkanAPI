@@ -27,9 +27,10 @@ namespace LIB_NAMESPACE
 		UniformBuffer(
 			VkDevice device,
 			VkPhysicalDevice physicalDevice,
-			CreateInfo& createInfo
+			const CreateInfo & createInfo
 		);
-		UniformBuffer(const UniformBuffer&) = delete;
+		UniformBuffer(const UniformBuffer &) = delete;
+		UniformBuffer(UniformBuffer && other);
 		~UniformBuffer();
 
 		Buffer* buffer(uint32_t index) const { return m_buffers[index].get(); }
@@ -47,12 +48,12 @@ namespace LIB_NAMESPACE
 		void createBuffer(
 			VkDevice device,
 			VkPhysicalDevice physicalDevice,
-			CreateInfo& createInfo
+			const CreateInfo & createInfo
 		);
 
 		void createDescriptor(
 			VkDevice device,
-			CreateInfo& createInfo
+			const CreateInfo & createInfo
 		);
 
 	};

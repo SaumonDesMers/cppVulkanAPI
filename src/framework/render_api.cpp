@@ -619,22 +619,15 @@ namespace LIB_NAMESPACE
 		return Pipeline::maxID++;
 	}
 
-	UniformBuffer::ID RenderAPI::createUniformBuffer(UniformBuffer::CreateInfo& createInfo)
+	uint64_t RenderAPI::createUniformBuffer(const UniformBuffer::CreateInfo & create_info)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		m_uniformBufferMap[UniformBuffer::maxID] = std::make_unique<UniformBuffer>(
+		return m_uniform_buffer_map.insert(UniformBuffer(
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
-			createInfo
-		);
-
-		return UniformBuffer::maxID++;
-		// return m_uniformBufferMap.insert(UniformBuffer(
-		// 	m_device.device().getVk(),
-		// 	m_device.physicalDevice().getVk(),
-		// 	createInfo
-		// ));
+			create_info
+		));
 	}
 
 	void RenderAPI::bindPipeline(Pipeline::ID pipelineID)
@@ -748,11 +741,10 @@ namespace LIB_NAMESPACE
 		return m_textureMap[textureID];
 	}
 
-	std::unique_ptr<vk::UniformBuffer>& RenderAPI::getUniformBuffer(UniformBuffer::ID uniformBufferID)
+	UniformBuffer & RenderAPI::getUniformBuffer(uint64_t uniform_buffer_id)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		return m_uniformBufferMap[uniformBufferID];
-		// return m_uniformBufferMap.get(uniformBufferID);
+		return m_uniform_buffer_map.get(uniform_buffer_id);
 	}
 }

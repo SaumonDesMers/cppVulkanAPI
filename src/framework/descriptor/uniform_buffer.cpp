@@ -7,11 +7,17 @@ namespace LIB_NAMESPACE
 	UniformBuffer::UniformBuffer(
 		VkDevice device,
 		VkPhysicalDevice physicalDevice,
-		CreateInfo& createInfo
+		const CreateInfo & createInfo
 	)
 	{
 		createBuffer(device, physicalDevice, createInfo);
 		createDescriptor(device, createInfo);
+	}
+
+	UniformBuffer::UniformBuffer(UniformBuffer && other)
+	{
+		m_buffers = std::move(other.m_buffers);
+		m_descriptor = std::move(other.m_descriptor);
 	}
 
 	UniformBuffer::~UniformBuffer()
@@ -21,7 +27,7 @@ namespace LIB_NAMESPACE
 	void UniformBuffer::createBuffer(
 		VkDevice device,
 		VkPhysicalDevice physicalDevice,
-		CreateInfo& createInfo
+		const CreateInfo & createInfo
 	)
 	{
 		m_buffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -47,7 +53,7 @@ namespace LIB_NAMESPACE
 
 	void UniformBuffer::createDescriptor(
 		VkDevice device,
-		CreateInfo& createInfo
+		const CreateInfo & createInfo
 	)
 	{
 		VkDescriptorSetLayoutBinding layoutBinding{};

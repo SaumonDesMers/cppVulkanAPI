@@ -12,8 +12,6 @@ namespace LIB_NAMESPACE
 	template<typename Value>
 	class Map
 	{
-
-		typedef typename Value::ID ID;
 	
 	public:
 
@@ -32,18 +30,16 @@ namespace LIB_NAMESPACE
 		Map & operator=(Map& map) = delete;
 		Map & operator=(Map&& map) = delete;
 
-		ID insert(Value && value)
+		uint64_t insert(Value && value)
 		{
-			m_map.insert({m_next_id, value});
+			m_map.insert(std::make_pair(m_next_id, std::move(value)));
 			return m_next_id++;
 		}
 
-		Value get(ID key)
-		{
-			return m_map.at(key);
-		}
+		Value & get(uint64_t key) { return m_map.at(key); }
+		const Value & get(uint64_t key) const { return m_map.at(key); }
 
-		void remove(ID key)
+		void remove(uint64_t key)
 		{
 			m_map.erase(key);
 		}
@@ -55,8 +51,8 @@ namespace LIB_NAMESPACE
 
 	private:
 
-		std::map<ID, Value> m_map;
-		ID m_next_id;
+		std::map<uint64_t, Value> m_map;
+		uint64_t m_next_id;
 
 	};
 }
