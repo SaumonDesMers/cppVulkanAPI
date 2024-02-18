@@ -15,7 +15,14 @@ namespace LIB_NAMESPACE
 
 			DeviceMemory(
 				VkDevice device,
-				const VkMemoryAllocateInfo & allocateInfo
+				const VkMemoryAllocateInfo & alloc_info
+			);
+
+			DeviceMemory(
+				VkDevice device,
+				VkPhysicalDevice physical_device,
+				VkMemoryPropertyFlags properties,
+				VkMemoryRequirements memory_requirements
 			);
 
 			~DeviceMemory();
@@ -36,7 +43,7 @@ namespace LIB_NAMESPACE
 			void write(void *data, uint32_t size);
 
 			static uint32_t findMemoryType(
-				VkPhysicalDevice physicalDevice,
+				VkPhysicalDevice physical_device,
 				uint32_t typeFilter,
 				VkMemoryPropertyFlags properties
 			);
@@ -47,13 +54,8 @@ namespace LIB_NAMESPACE
 
 			VkDevice m_device;
 
-			bool m_isMapped;
-			void *m_mappedMemory;
-
-			void init(
-				const VkMemoryAllocateInfo& allocateInfo,
-				VkMemoryPropertyFlags properties
-			);
+			bool m_is_mapped;
+			void *m_mapped_memory;
 
 		};
 	}

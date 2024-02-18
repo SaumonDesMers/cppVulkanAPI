@@ -13,22 +13,22 @@ namespace LIB_NAMESPACE
 		
 		public:
 
-			struct CreateInfo: public VkImageViewCreateInfo
-			{
-				CreateInfo(): VkImageViewCreateInfo()
-				{
-					this->sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				}
-			};
+			ImageView(
+				VkDevice device,
+				const VkImageViewCreateInfo & create_info
+			);
 
-			ImageView(VkDevice device, const VkImageViewCreateInfo& createInfo);
 			~ImageView();
 
-			VkImageView getVk() const { return m_imageView; }
+			ImageView(const ImageView &) = delete;
+
+			ImageView(ImageView && other);
+
+			VkImageView getVk() const { return m_image_view; }
 
 		private:
 
-			VkImageView m_imageView;
+			VkImageView m_image_view;
 
 			VkDevice m_device;
 

@@ -23,6 +23,13 @@ namespace LIB_NAMESPACE
 			vkDestroyImage(m_device, m_image, nullptr);
 		}
 
+		Image::Image(Image&& other):
+			m_image(other.m_image),
+			m_device(other.m_device)
+		{
+			other.m_image = VK_NULL_HANDLE;
+		}
+
 		VkMemoryRequirements Image::getMemoryRequirements() const
 		{
 			VkMemoryRequirements memoryRequirements;

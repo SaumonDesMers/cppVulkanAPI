@@ -12,48 +12,41 @@ namespace LIB_NAMESPACE
 		VkMemoryPropertyFlags properties,
 		VkImageViewCreateInfo viewInfo
 	):
+		m_image(device, imageInfo),
+		m_memory(device, physicalDevice, properties, m_image.getMemoryRequirements()),
+		m_image_view(device, setupImageViewCreateInfo(device, viewInfo)),
 		m_width(imageInfo.extent.width),
 		m_height(imageInfo.extent.height),
 		m_format(imageInfo.format),
 		m_mipLevels(imageInfo.mipLevels)
 	{
-		m_image = std::make_unique<core::Image>(device, imageInfo);
-
-		VkMemoryRequirements memRequirements = m_image->getMemoryRequirements();
-
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = core::DeviceMemory::findMemoryType(
-			physicalDevice,
-			memRequirements.memoryTypeBits,
-			properties
-		);
-
-		m_memory = std::make_unique<core::DeviceMemory>(device, allocInfo);
-
-		vkBindImageMemory(device, m_image->getVk(), m_memory->getVk(), 0);
-
-
-		viewInfo.image = m_image->getVk();
-
-		m_imageView = std::make_unique<core::ImageView>(device, viewInfo);
 	}
 
-	Image::Image(Image&& other)
+	Image::Image(Image&& other):
+		m_image(std::move(other.m_image)),
+		m_memory(std::move(other.m_memory)),
+		m_image_view(std::move(other.m_image_view)),
+		m_width(other.m_width),
+		m_height(other.m_height),
+		m_format(other.m_format),
+		m_mipLevels(other.m_mipLevels)
 	{
-		m_image = std::move(other.m_image);
-		m_memory = std::move(other.m_memory);
-		m_imageView = std::move(other.m_imageView);
-
-		m_width = other.m_width;
-		m_height = other.m_height;
-		m_format = other.m_format;
-		m_mipLevels = other.m_mipLevels;
 	}
 
 	Image::~Image()
 	{
+	}
+
+	VkImageViewCreateInfo & Image::setupImageViewCreateInfo(
+		VkDevice device,
+		VkImageViewCreateInfo & viewInfo
+	)
+	{
+		vkBindImageMemory(device, m_image.getVk(), m_memory.getVk(), 0);
+
+		viewInfo.image = m_image.getVk();
+
+		return viewInfo;
 	}
 
 

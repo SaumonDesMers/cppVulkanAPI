@@ -10,14 +10,31 @@ namespace LIB_NAMESPACE
 	{
 		DeviceMemory::DeviceMemory(
 			VkDevice device,
-			const VkMemoryAllocateInfo & allocInfo
+			const VkMemoryAllocateInfo & alloc_info
 		):
 			m_device(device)
 		{
-			if (vkAllocateMemory(device, &allocInfo, nullptr, &m_memory) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to allocate vertex buffer memory.");
-			}
+			VK_CHECK(vkAllocateMemory(device, &alloc_info, nullptr, &m_memory), "failed to allocate device memory.");
+		}
+
+		DeviceMemory::DeviceMemory(
+			VkDevice device,
+			VkPhysicalDevice physical_device,
+			VkMemoryPropertyFlags properties,
+			VkMemoryRequirements memory_requirements
+		):
+			m_device(device)
+		{
+			VkMemoryAllocateInfo alloc_info = {};
+			alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			alloc_info.allocationSize = memory_requirements.size;
+			alloc_info.memoryTypeIndex = findMemoryType(
+				physical_device,
+				memory_requirements.memoryTypeBits,
+				properties
+			);
+
+			VK_CHECK(vkAllocateMemory(device, &alloc_info, nullptr, &m_memory), "failed to allocate device memory.");
 		}
 
 		DeviceMemory::~DeviceMemory()
@@ -28,28 +45,28 @@ namespace LIB_NAMESPACE
 		DeviceMemory::DeviceMemory(DeviceMemory && other):
 			m_memory(other.m_memory),
 			m_device(other.m_device),
-			m_isMapped(other.m_isMapped),
-			m_mappedMemory(other.m_mappedMemory)
+			m_is_mapped(other.m_is_mapped),
+			m_mapped_memory(other.m_mapped_memory)
 		{
 			other.m_memory = VK_NULL_HANDLE;
-			other.m_isMapped = false;
-			other.m_mappedMemory = nullptr;
+			other.m_is_mapped = false;
+			other.m_mapped_memory = nullptr;
 		}
 
 		uint32_t DeviceMemory::findMemoryType(
-			VkPhysicalDevice physicalDevice,
-			uint32_t typeFilter,
+			VkPhysicalDevice physical_device,
+			uint32_t type_filter,
 			VkMemoryPropertyFlags properties
 		)
 		{
-			VkPhysicalDeviceMemoryProperties memProperties;
-			vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+			VkPhysicalDeviceMemoryProperties mem_properties;
+			vkGetPhysicalDeviceMemoryProperties(physical_device, &mem_properties);
 
-			for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+			for (uint32_t i = 0; i < mem_properties.memoryTypeCount; i++)
 			{
 				if (
-					(typeFilter & (1 << i))
-					&& (memProperties.memoryTypes[i].propertyFlags & properties) == properties
+					(type_filter & (1 << i))
+					&& (mem_properties.memoryTypes[i].propertyFlags & properties) == properties
 				)
 				{
 					return i;
@@ -65,11 +82,11 @@ namespace LIB_NAMESPACE
 			VkMemoryMapFlags flags
 		)
 		{
-			VkResult result = vkMapMemory(m_device, m_memory, offset, size, flags, &m_mappedMemory);
+			VkResult result = vkMapMemory(m_device, m_memory, offset, size, flags, &m_mapped_memory);
 
 			if (result == VK_SUCCESS)
 			{
-				m_isMapped = true;
+				m_is_mapped = true;
 			}
 
 			return result;
@@ -78,17 +95,17 @@ namespace LIB_NAMESPACE
 		void DeviceMemory::unmap()
 		{
 			vkUnmapMemory(m_device, m_memory);
-			m_isMapped = false;
+			m_is_mapped = false;
 		}
 
 		void DeviceMemory::write(void *data, uint32_t size)
 		{
-			if (m_isMapped == false)
+			if (m_is_mapped == false)
 			{
 				throw std::runtime_error("failed to write data to memory: memory is not mapped.");
 			}
 
-			memcpy(m_mappedMemory, data, size);
+			memcpy(m_mapped_memory, data, size);
 
 		}
 	}

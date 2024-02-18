@@ -12,7 +12,7 @@ namespace LIB_NAMESPACE
 		VkMemoryPropertyFlags properties
 	):
 		m_buffer(device, bufferInfo),
-		m_memory(device, memoryAllocateInfo(physicalDevice, properties))
+		m_memory(device, physicalDevice, properties, m_buffer.getMemoryRequirements())
 	{
 		vkBindBufferMemory(device, m_buffer.getVk(), m_memory.getVk(), 0);
 	}
@@ -26,26 +26,6 @@ namespace LIB_NAMESPACE
 
 	Buffer::~Buffer()
 	{
-	}
-
-	VkMemoryAllocateInfo Buffer::memoryAllocateInfo(
-		VkPhysicalDevice physicalDevice,
-		VkMemoryPropertyFlags properties
-	)
-	{
-		VkMemoryRequirements memRequirements = m_buffer.getMemoryRequirements();
-
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = core::DeviceMemory::findMemoryType(
-			physicalDevice,
-			memRequirements.memoryTypeBits,
-			properties
-		);
-
-		return allocInfo;
-	
 	}
 
 	VkResult Buffer::map(

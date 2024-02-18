@@ -58,10 +58,5 @@ namespace LIB_NAMESPACE
 		core::Buffer m_buffer;
 		core::DeviceMemory m_memory;
 
-		VkMemoryAllocateInfo memoryAllocateInfo(
-			VkPhysicalDevice physicalDevice,
-			VkMemoryPropertyFlags properties
-		);
-
 	};
 }

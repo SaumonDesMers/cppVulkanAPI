@@ -23,13 +23,13 @@ namespace LIB_NAMESPACE
 			VkMemoryPropertyFlags properties,
 			VkImageViewCreateInfo viewInfo
 		);
-		Image(const Image&) = delete;
-		Image(Image&&);
+		Image(const Image &) = delete;
+		Image(Image && other);
 		~Image();
 
-		VkImage image() const { return m_image->getVk(); }
-		VkDeviceMemory memory() const { return m_memory->getVk(); }
-		VkImageView view() const { return m_imageView->getVk(); }
+		VkImage image() { return m_image.getVk(); }
+		VkDeviceMemory memory() { return m_memory.getVk(); }
+		VkImageView view() { return m_image_view.getVk(); }
 
 		uint32_t width() const { return m_width; }
 		uint32_t height() const { return m_height; }
@@ -53,14 +53,19 @@ namespace LIB_NAMESPACE
 
 	private:
 
-		std::unique_ptr<core::Image> m_image;
-		std::unique_ptr<core::DeviceMemory> m_memory;
-		std::unique_ptr<core::ImageView> m_imageView;
+		core::Image m_image;
+		core::DeviceMemory m_memory;
+		core::ImageView m_image_view;
 
 		uint32_t m_width;
 		uint32_t m_height;
 		VkFormat m_format;
 		uint32_t m_mipLevels;
+
+		VkImageViewCreateInfo & setupImageViewCreateInfo(
+			VkDevice device,
+			VkImageViewCreateInfo & viewInfo
+		);
 
 	};
 }

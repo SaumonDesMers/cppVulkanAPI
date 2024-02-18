@@ -17,7 +17,12 @@ namespace LIB_NAMESPACE
 				VkDevice device,
 				VkImageCreateInfo& createInfo
 			);
+
 			~Image();
+
+			Image(const Image &) = delete;
+
+			Image(Image && other);
 
 			VkImage getVk() const { return m_image; }
 
