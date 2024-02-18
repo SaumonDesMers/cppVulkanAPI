@@ -14,15 +14,11 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		typedef uint32_t ID;
-
 		struct CreateInfo
 		{
 			VkDeviceSize size;
 			VkShaderStageFlags stageFlags;
 		};
-
-		static inline ID maxID = 0;
 
 		UniformBuffer(
 			VkDevice device,

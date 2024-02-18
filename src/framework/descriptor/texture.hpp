@@ -31,6 +31,7 @@ namespace LIB_NAMESPACE
 			CreateInfo& createInfo
 		);
 		Texture(const Texture&) = delete;
+		Texture(Texture && other);
 		~Texture();
 
 		Image& image() const { return *m_image.get(); }

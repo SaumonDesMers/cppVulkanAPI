@@ -11,6 +11,12 @@ namespace LIB_NAMESPACE
 		createPipeline(device, createInfo);
 	}
 
+	Pipeline::Pipeline(Pipeline && other):
+		layout(std::move(other.layout)),
+		pipeline(std::move(other.pipeline))
+	{
+	}
+
 	Pipeline::~Pipeline()
 	{
 	}

@@ -22,6 +22,14 @@ namespace LIB_NAMESPACE
 		createIndexBuffer(device, physicalDevice, command, meshInfo.indices);
 	}
 
+	Mesh::Mesh(Mesh && other):
+		m_vertexBuffer(std::move(other.m_vertexBuffer)),
+		m_vertexCount(other.m_vertexCount),
+		m_indexBuffer(std::move(other.m_indexBuffer)),
+		m_indexCount(other.m_indexCount)
+	{
+	}
+
 	Mesh::~Mesh()
 	{
 	}

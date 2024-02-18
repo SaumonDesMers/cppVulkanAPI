@@ -77,6 +77,15 @@ namespace LIB_NAMESPACE
 		createDescriptor(device, createInfo);
 	}
 
+	Texture::Texture(Texture&& other):
+		m_image(std::move(other.m_image)),
+		m_sampler(std::move(other.m_sampler)),
+		m_descriptor(std::move(other.m_descriptor)),
+		m_width(other.m_width),
+		m_height(other.m_height)
+	{
+	}
+
 	Texture::~Texture()
 	{
 	}

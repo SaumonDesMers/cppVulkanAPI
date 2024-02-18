@@ -40,10 +40,10 @@ namespace LIB_NAMESPACE
 		RenderAPI(GLFWwindow *glfwWindow);
 		~RenderAPI();
 
-		Mesh::ID loadModel(const std::string& filename);
-		Pipeline::ID createPipeline(Pipeline::CreateInfo& createInfo);
-		Descriptor::ID createDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
-		Texture::ID loadTexture(Texture::CreateInfo& createInfo);
+		uint64_t loadModel(const std::string & filename);
+		uint64_t createPipeline(Pipeline::CreateInfo & createInfo);
+		uint64_t createDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
+		uint64_t loadTexture(Texture::CreateInfo & createInfo);
 		uint64_t createUniformBuffer(const UniformBuffer::CreateInfo & create_info);
 
 		// function to start recording a command buffer
@@ -71,52 +71,40 @@ namespace LIB_NAMESPACE
 		// temporary functions to access private members
 		GLFWwindow* getWindow();
 		uint32_t currentFrame();
-		std::unique_ptr<vk::Mesh>& getMesh(Mesh::ID meshID);
-		std::unique_ptr<vk::Descriptor>& getDescriptor(Descriptor::ID descriptorID);
-		std::unique_ptr<Texture>& getTexture(Texture::ID textureID);
-
-		std::unique_ptr<vk::UniformBuffer>& getUniformBuffer(UniformBuffer::ID uniformBufferID);
+		Mesh & getMesh(uint32_t meshID);
+		Descriptor & getDescriptor(uint64_t descriptorID);
+		Texture & getTexture(uint64_t textureID);
 		UniformBuffer & getUniformBuffer(uint64_t uniform_buffer_id);
 
 	private:
 
-		const std::vector<const char*> validationLayers = {
-			"VK_LAYER_KHRONOS_validation"
-		};
-
-		const std::vector<const char*> deviceExtensions = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
-		};
-
 		Device m_device;
 
-		std::unique_ptr<vk::Swapchain> m_swapchain;
-
-		std::map<Descriptor::ID, std::unique_ptr<vk::Descriptor>> m_descriptorMap;
-
-		std::unique_ptr<vk::Command> m_command;
+		std::unique_ptr<Command> m_command;
 		std::vector<VkCommandBuffer> m_vkCommandBuffers;
 
-		std::map<Pipeline::ID, std::unique_ptr<vk::Pipeline>> m_pipelineMap;
 
-		std::unique_ptr<vk::Image> m_colorImage;
-		std::unique_ptr<vk::Image> m_depthImage;
+		std::unique_ptr<Swapchain> m_swapchain;
 
-		std::vector<std::unique_ptr<vk::core::Semaphore>> m_imageAvailableSemaphores;
-		std::vector<std::unique_ptr<vk::core::Semaphore>> m_renderFinishedSemaphores;
-		std::vector<std::unique_ptr<vk::core::Semaphore>> m_swapchainUpdatedSemaphores;
-		std::vector<std::unique_ptr<vk::core::Fence>> m_inFlightFences;
+		std::unique_ptr<Image> m_colorImage;
+		std::unique_ptr<Image> m_depthImage;
 
-		Mesh::ID m_maxMeshID = 0;
-		std::map<Mesh::ID, std::unique_ptr<vk::Mesh>> m_meshMap;
+		std::vector<std::unique_ptr<core::Semaphore>> m_imageAvailableSemaphores;
+		std::vector<std::unique_ptr<core::Semaphore>> m_renderFinishedSemaphores;
+		std::vector<std::unique_ptr<core::Semaphore>> m_swapchainUpdatedSemaphores;
+		std::vector<std::unique_ptr<core::Fence>> m_inFlightFences;
 
-		uint32_t m_mipLevels;
-		Texture::ID m_maxTextureID;
-		std::map<Texture::ID, std::unique_ptr<Texture>> m_textureMap;
 
-		vk::Map<vk::UniformBuffer> m_uniform_buffer_map;
+		Map<Descriptor> m_descriptor_map;
 
-		bool m_framebufferResized = false;
+		Map<Pipeline> m_pipeline_map;
+
+		Map<Mesh> m_mesh_map;
+
+		Map<Texture> m_texture_map;
+
+		Map<UniformBuffer> m_uniform_buffer_map;
+
 
 		uint32_t m_currentFrame = 0;
 

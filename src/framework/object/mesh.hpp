@@ -28,6 +28,8 @@ namespace LIB_NAMESPACE
 			Command& command,
 			CreateInfo& meshInfo
 		);
+		Mesh(const Mesh &) = delete;
+		Mesh(Mesh && other);
 		~Mesh();
 
 		inline Buffer& vertexBuffer() { return *m_vertexBuffer; }

@@ -17,10 +17,10 @@ namespace LIB_NAMESPACE
 	RenderAPI::RenderAPI(GLFWwindow *glfwWindow):
 		m_device(glfwWindow)
 	{
+		createCommandPool();
 		createSwapchain();
 		createColorResources();
 		createDepthResources();
-		createCommandPool();
 		createSyncObjects();
 	}
 
@@ -37,7 +37,7 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createSwapchain()
 	{
-		vk::Swapchain::CreateInfo swapchainInfo = {};
+		Swapchain::CreateInfo swapchainInfo = {};
 		swapchainInfo.surface = m_device.surface().getVk();
 		swapchainInfo.support_details = m_device.querySwapChainSupport(m_device.physicalDevice().getVk());
 
@@ -49,7 +49,7 @@ namespace LIB_NAMESPACE
 
 		swapchainInfo.old_swapchain = VK_NULL_HANDLE;
 
-		m_swapchain = std::make_unique<vk::Swapchain>(m_device.device().getVk(), swapchainInfo);
+		m_swapchain = std::make_unique<Swapchain>(m_device.device().getVk(), swapchainInfo);
 	}
 
 	void RenderAPI::recreateSwapChain()
@@ -91,7 +91,7 @@ namespace LIB_NAMESPACE
 
 	void RenderAPI::createColorResources()
 	{
-		m_colorImage = std::make_unique<vk::Image>(vk::Image::createColorImage(
+		m_colorImage = std::make_unique<Image>(Image::createColorImage(
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
 			m_swapchain->extent(),
@@ -104,7 +104,7 @@ namespace LIB_NAMESPACE
 	{
 		VkFormat depthFormat = findDepthFormat();
 
-		m_depthImage = std::make_unique<vk::Image>(vk::Image::createDepthImage(
+		m_depthImage = std::make_unique<Image>(Image::createDepthImage(
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
 			m_swapchain->extent(),
@@ -119,17 +119,17 @@ namespace LIB_NAMESPACE
 		m_swapchainUpdatedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-		vk::core::Semaphore::CreateInfo semaphoreInfo{};
+		core::Semaphore::CreateInfo semaphoreInfo{};
 
-		vk::core::Fence::CreateInfo fenceInfo{};
+		core::Fence::CreateInfo fenceInfo{};
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_imageAvailableSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_renderFinishedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_swapchainUpdatedSemaphores[i] = std::make_unique<vk::core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_inFlightFences[i] = std::make_unique<vk::core::Fence>(m_device.device().getVk(), fenceInfo);
+			m_imageAvailableSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_renderFinishedSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_swapchainUpdatedSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_inFlightFences[i] = std::make_unique<core::Fence>(m_device.device().getVk(), fenceInfo);
 		}
 
 	}
@@ -530,9 +530,8 @@ namespace LIB_NAMESPACE
 		result = vkQueuePresentKHR(m_device.presentQueue().getVk(), &presentInfo);
 
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_framebufferResized)
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
-			m_framebufferResized = false;
 			recreateSwapChain();
 		}
 		else if (result != VK_SUCCESS)
@@ -545,63 +544,59 @@ namespace LIB_NAMESPACE
 
 
 
-	vk::Mesh::ID RenderAPI::loadModel(const std::string& filename)
+	uint64_t RenderAPI::loadModel(const std::string & filename)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		vk::Mesh::CreateInfo meshInfo = {};
+		Mesh::CreateInfo meshInfo = {};
 
-		vk::Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
+		Mesh::readObjFile(filename, meshInfo.vertices, meshInfo.indices);
 
-		m_meshMap[m_maxMeshID] = std::make_unique<vk::Mesh>(
+		return m_mesh_map.insert(Mesh(
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
 			*m_command.get(),
 			meshInfo
-		);
-
-		return m_maxMeshID++;
+		));
 	}
 
-	Descriptor::ID RenderAPI::createDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
+	uint64_t RenderAPI::createDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		vk::Descriptor::CreateInfo descriptorInfo{};
+		Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
 		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-		m_descriptorMap[Descriptor::maxID] = std::make_unique<Descriptor>(
+		return m_descriptor_map.insert(Descriptor(
 			m_device.device().getVk(),
 			descriptorInfo
-		);
-
-		return Descriptor::maxID++;
+		));
 	}
 
-	Texture::ID RenderAPI::loadTexture(Texture::CreateInfo& createInfo)
+	uint64_t RenderAPI::loadTexture(Texture::CreateInfo & createInfo)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		m_textureMap[m_maxTextureID] = std::make_unique<Texture>(
+		uint64_t texture_id = m_texture_map.insert(Texture(
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
 			*m_command.get(),
 			createInfo
-		);
+		));
 
 		generateMipmaps(
-			m_textureMap[m_maxTextureID]->image().image(),
+			m_texture_map.get(texture_id).image().image(),
 			VK_FORMAT_R8G8B8A8_SRGB,
-			m_textureMap[m_maxTextureID]->width(),
-			m_textureMap[m_maxTextureID]->height(),
-			m_textureMap[m_maxTextureID]->image().mipLevels()
+			m_texture_map.get(texture_id).width(),
+			m_texture_map.get(texture_id).height(),
+			m_texture_map.get(texture_id).image().mipLevels()
 		);
 
-		return m_maxTextureID++;
+		return texture_id;
 	}
 
-	Pipeline::ID RenderAPI::createPipeline(Pipeline::CreateInfo& createInfo)
+	uint64_t RenderAPI::createPipeline(Pipeline::CreateInfo & createInfo)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
@@ -614,9 +609,10 @@ namespace LIB_NAMESPACE
 
 		createInfo.pNext = &renderingInfo;
 
-		m_pipelineMap[Pipeline::maxID] = std::make_unique<vk::Pipeline>(m_device.device().getVk(), createInfo);
-
-		return Pipeline::maxID++;
+		return m_pipeline_map.insert(Pipeline(
+			m_device.device().getVk(),
+			createInfo
+		));
 	}
 
 	uint64_t RenderAPI::createUniformBuffer(const UniformBuffer::CreateInfo & create_info)
@@ -636,7 +632,7 @@ namespace LIB_NAMESPACE
 
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineMap[pipelineID]->pipeline->getVk());
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_map.get(pipelineID).pipeline->getVk());
 	}
 
 	void RenderAPI::bindDescriptor(
@@ -653,7 +649,7 @@ namespace LIB_NAMESPACE
 		vkCmdBindDescriptorSets(
 			cmd,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			m_pipelineMap[pipelineID]->layout->getVk(),
+			m_pipeline_map.get(pipelineID).layout->getVk(),
 			firstSet, descriptorSetCount,
 			pDescriptorSets,
 			0, nullptr
@@ -668,7 +664,7 @@ namespace LIB_NAMESPACE
 
 		vkCmdPushConstants(
 			cmd,
-			m_pipelineMap[pipelineID]->layout->getVk(),
+			m_pipeline_map.get(pipelineID).layout->getVk(),
 			stageFlags,
 			0,
 			size,
@@ -694,19 +690,19 @@ namespace LIB_NAMESPACE
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 	}
 
-	void RenderAPI::drawMesh(vk::Mesh::ID meshID)
+	void RenderAPI::drawMesh(Mesh::ID meshID)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
-		VkBuffer vertexBuffers[] = {m_meshMap[meshID]->vertexBuffer().buffer()};
+		VkBuffer vertexBuffers[] = {m_mesh_map.get(meshID).vertexBuffer().buffer()};
 		VkDeviceSize offsets[] = {0};
 		vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
 
-		vkCmdBindIndexBuffer(cmd, m_meshMap[meshID]->indexBuffer().buffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(cmd, m_mesh_map.get(meshID).indexBuffer().buffer(), 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdDrawIndexed(cmd, m_meshMap[meshID]->indexCount(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(cmd, m_mesh_map.get(meshID).indexCount(), 1, 0, 0, 0);
 	}
 
 
@@ -720,25 +716,25 @@ namespace LIB_NAMESPACE
 		return m_currentFrame;
 	}
 
-	std::unique_ptr<vk::Mesh>& RenderAPI::getMesh(vk::Mesh::ID meshID)
+	Mesh & RenderAPI::getMesh(uint32_t meshID)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		return m_meshMap[meshID];
+		return m_mesh_map.get(meshID);
 	}
 
-	std::unique_ptr<vk::Descriptor>& RenderAPI::getDescriptor(Descriptor::ID descriptorID)
+	Descriptor & RenderAPI::getDescriptor(uint64_t descriptor_id)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		return m_descriptorMap[descriptorID];
+		return m_descriptor_map.get(descriptor_id);
 	}
 
-	std::unique_ptr<Texture>& RenderAPI::getTexture(Texture::ID textureID)
+	Texture & RenderAPI::getTexture(uint64_t textureID)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		return m_textureMap[textureID];
+		return m_texture_map.get(textureID);
 	}
 
 	UniformBuffer & RenderAPI::getUniformBuffer(uint64_t uniform_buffer_id)

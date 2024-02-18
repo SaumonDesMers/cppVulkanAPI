@@ -37,6 +37,8 @@ namespace LIB_NAMESPACE
 		std::unique_ptr<core::Pipeline> pipeline;
 
 		Pipeline(VkDevice device, const CreateInfo& createInfo);
+		Pipeline(const Pipeline &) = delete;
+		Pipeline(Pipeline && other);
 		~Pipeline();
 
 	private:
