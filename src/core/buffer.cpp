@@ -43,6 +43,13 @@ namespace LIB_NAMESPACE
 			vkDestroyBuffer(m_device, m_buffer, nullptr);
 		}
 
+		Buffer::Buffer(Buffer&& other)
+		{
+			m_buffer = other.m_buffer;
+			other.m_buffer = VK_NULL_HANDLE;
+			m_device = other.m_device;
+		}
+
 		VkMemoryRequirements Buffer::getMemoryRequirements()
 		{
 			VkMemoryRequirements memRequirements;

@@ -10,7 +10,7 @@ namespace LIB_NAMESPACE
 	{
 		DeviceMemory::DeviceMemory(
 			VkDevice device,
-			VkMemoryAllocateInfo& allocInfo
+			const VkMemoryAllocateInfo & allocInfo
 		):
 			m_device(device)
 		{
@@ -23,6 +23,17 @@ namespace LIB_NAMESPACE
 		DeviceMemory::~DeviceMemory()
 		{
 			vkFreeMemory(m_device, m_memory, nullptr);
+		}
+
+		DeviceMemory::DeviceMemory(DeviceMemory && other):
+			m_memory(other.m_memory),
+			m_device(other.m_device),
+			m_isMapped(other.m_isMapped),
+			m_mappedMemory(other.m_mappedMemory)
+		{
+			other.m_memory = VK_NULL_HANDLE;
+			other.m_isMapped = false;
+			other.m_mappedMemory = nullptr;
 		}
 
 		uint32_t DeviceMemory::findMemoryType(

@@ -10,11 +10,30 @@ namespace LIB_NAMESPACE
 		VkPhysicalDevice physicalDevice,
 		VkBufferCreateInfo bufferInfo,
 		VkMemoryPropertyFlags properties
+	):
+		m_buffer(device, bufferInfo),
+		m_memory(device, memoryAllocateInfo(physicalDevice, properties))
+	{
+		vkBindBufferMemory(device, m_buffer.getVk(), m_memory.getVk(), 0);
+	}
+
+	Buffer::Buffer(Buffer&& other):
+		m_buffer(std::move(other.m_buffer)),
+		m_memory(std::move(other.m_memory))
+	{
+
+	}
+
+	Buffer::~Buffer()
+	{
+	}
+
+	VkMemoryAllocateInfo Buffer::memoryAllocateInfo(
+		VkPhysicalDevice physicalDevice,
+		VkMemoryPropertyFlags properties
 	)
 	{
-		m_buffer = std::make_unique<core::Buffer>(device, bufferInfo);
-
-		VkMemoryRequirements memRequirements = m_buffer->getMemoryRequirements();
+		VkMemoryRequirements memRequirements = m_buffer.getMemoryRequirements();
 
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -25,25 +44,8 @@ namespace LIB_NAMESPACE
 			properties
 		);
 
-		m_memory = std::make_unique<core::DeviceMemory>(device, allocInfo);
-
-		vkBindBufferMemory(device, m_buffer->getVk(), m_memory->getVk(), 0);
-	}
-
-	Buffer::Buffer(Buffer&& other)
-	{
-		// std::cout << "test to see if the unique pointers are still valid before move" << std::endl;
-		// std::cout << "buffer: " << other.m_buffer->getVk() << std::endl;
-
-		m_buffer = std::move(other.m_buffer);
-		m_memory = std::move(other.m_memory);
-
-		// std::cout << "test to see if the unique pointers are still valid after move" << std::endl;
-		// std::cout << "buffer: " << m_buffer->getVk() << std::endl;
-	}
-
-	Buffer::~Buffer()
-	{
+		return allocInfo;
+	
 	}
 
 	VkResult Buffer::map(
@@ -52,17 +54,17 @@ namespace LIB_NAMESPACE
 		VkMemoryMapFlags flags
 	)
 	{
-		return m_memory->map(offset, size, flags);
+		return m_memory.map(offset, size, flags);
 	}
 
 	void Buffer::unmap()
 	{
-		m_memory->unmap();
+		m_memory.unmap();
 	}
 
 	void Buffer::write(void *data, uint32_t size)
 	{
-		m_memory->write(data, size);
+		m_memory.write(data, size);
 	}
 
 

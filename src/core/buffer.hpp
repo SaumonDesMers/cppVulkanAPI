@@ -25,12 +25,19 @@ namespace LIB_NAMESPACE
 				VkDevice device,
 				VkBufferCreateInfo& createInfo
 			);
+
 			Buffer(
 				VkDevice device,
 				VkDeviceSize size,
 				VkBufferUsageFlags usage
 			);
+
 			~Buffer();
+
+			Buffer(Buffer&& other);
+
+			Buffer(const Buffer&) = delete;
+
 
 			VkBuffer getVk() { return m_buffer; }
 

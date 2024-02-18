@@ -23,8 +23,8 @@ namespace LIB_NAMESPACE
 		Buffer(Buffer&&);
 		~Buffer();
 
-		VkBuffer buffer() const { return m_buffer->getVk(); }
-		VkDeviceMemory memory() const { return m_memory->getVk(); }
+		VkBuffer buffer() { return m_buffer.getVk(); }
+		VkDeviceMemory memory() { return m_memory.getVk(); }
 
 		VkResult map(
 			VkDeviceSize offset = 0,
@@ -55,8 +55,13 @@ namespace LIB_NAMESPACE
 
 	private:
 
-		std::unique_ptr<core::Buffer> m_buffer;
-		std::unique_ptr<core::DeviceMemory> m_memory;
+		core::Buffer m_buffer;
+		core::DeviceMemory m_memory;
+
+		VkMemoryAllocateInfo memoryAllocateInfo(
+			VkPhysicalDevice physicalDevice,
+			VkMemoryPropertyFlags properties
+		);
 
 	};
 }

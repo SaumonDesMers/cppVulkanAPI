@@ -13,19 +13,16 @@ namespace LIB_NAMESPACE
 
 		public:
 
-			struct AllocateInfo: public VkMemoryAllocateInfo
-			{
-				AllocateInfo(): VkMemoryAllocateInfo()
-				{
-					sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-				}
-			};
-
 			DeviceMemory(
 				VkDevice device,
-				VkMemoryAllocateInfo& allocateInfo
+				const VkMemoryAllocateInfo & allocateInfo
 			);
+
 			~DeviceMemory();
+
+			DeviceMemory(const DeviceMemory &) = delete;
+
+			DeviceMemory(DeviceMemory && other);
 
 			VkDeviceMemory getVk() { return m_memory; }
 
