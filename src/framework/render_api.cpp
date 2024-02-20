@@ -26,7 +26,7 @@ namespace LIB_NAMESPACE
 	{
 		m_device.device().waitIdle();
 
-		for (auto& vkCommandBuffer : m_vkCommandBuffers)
+		for (auto& vkCommandBuffer : m_vk_command_buffers)
 		{
 			m_command->freeCommandBuffer(vkCommandBuffer);
 		}
@@ -84,19 +84,19 @@ namespace LIB_NAMESPACE
 
 		m_command = std::make_unique<Command>(m_device.device().getVk(), commandInfo);
 
-		m_vkCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+		m_vk_command_buffers.resize(MAX_FRAMES_IN_FLIGHT);
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_vkCommandBuffers[i] = m_command->allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+			m_vk_command_buffers[i] = m_command->allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		}
 	}
 
 	void RenderAPI::createSyncObjects()
 	{
-		m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		m_swapchainUpdatedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-		m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+		m_image_available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_render_finished_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_swapchain_updated_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
 
 		core::Semaphore::CreateInfo semaphoreInfo{};
 
@@ -105,10 +105,10 @@ namespace LIB_NAMESPACE
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_imageAvailableSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_renderFinishedSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_swapchainUpdatedSemaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
-			m_inFlightFences[i] = std::make_unique<core::Fence>(m_device.device().getVk(), fenceInfo);
+			m_image_available_semaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_render_finished_semaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_swapchain_updated_semaphores[i] = std::make_unique<core::Semaphore>(m_device.device().getVk(), semaphoreInfo);
+			m_in_flight_fences[i] = std::make_unique<core::Fence>(m_device.device().getVk(), fenceInfo);
 		}
 
 	}
@@ -413,8 +413,8 @@ namespace LIB_NAMESPACE
 		copyImageInfo.pCommandBuffers = &commandBuffer;
 
 		VkSemaphore copyImageWaitSemaphores[] = {
-			m_imageAvailableSemaphores[m_currentFrame]->getVk(),
-			m_renderFinishedSemaphores[m_currentFrame]->getVk()
+			m_image_available_semaphores[m_current_frame]->getVk(),
+			m_render_finished_semaphores[m_current_frame]->getVk()
 		};
 		VkPipelineStageFlags copyImageWaitStages[] = {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -425,7 +425,7 @@ namespace LIB_NAMESPACE
 		copyImageInfo.pWaitDstStageMask = copyImageWaitStages;
 
 		VkSemaphore copyImageSignalSemaphores[] = {
-			m_swapchainUpdatedSemaphores[m_currentFrame]->getVk()
+			m_swapchain_updated_semaphores[m_current_frame]->getVk()
 		};
 		copyImageInfo.signalSemaphoreCount = 1;
 		copyImageInfo.pSignalSemaphores = copyImageSignalSemaphores;
@@ -468,10 +468,10 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
-		m_inFlightFences[m_currentFrame]->wait();
-		m_inFlightFences[m_currentFrame]->reset();
+		m_in_flight_fences[m_current_frame]->wait();
+		m_in_flight_fences[m_current_frame]->reset();
 
 		vkResetCommandBuffer(cmd, 0);
 
@@ -495,47 +495,45 @@ namespace LIB_NAMESPACE
 
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
-
-		std::vector<VkRenderingAttachmentInfo> colorAttachments(color_target_ids.size());
+		std::vector<VkRenderingAttachmentInfo> color_attachments(color_target_ids.size());
 		for (size_t i = 0; i < color_target_ids.size(); i++)
 		{
-			colorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			colorAttachments[i].imageView = m_color_target_map.get(color_target_ids[i]).view();
-			colorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			colorAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			colorAttachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachments[i].clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
+			color_attachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+			color_attachments[i].imageView = m_color_target_map.get(color_target_ids[i]).view();
+			color_attachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			color_attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			color_attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			color_attachments[i].clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
 		}
 
-		VkRenderingAttachmentInfo depthAttachment = {};
-		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		depthAttachment.imageView = m_depth_target_map.get(depth_target_id).view();
-		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAttachment.clearValue = {1.0f, 0};
+		VkRenderingAttachmentInfo depth_attachment = {};
+		depth_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depth_attachment.imageView = m_depth_target_map.get(depth_target_id).view();
+		depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depth_attachment.clearValue = {1.0f, 0};
 
-		VkRenderingInfo renderingInfo = {};
-		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		renderingInfo.renderArea = {
+		VkRenderingInfo rendering_info = {};
+		rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		rendering_info.renderArea = {
 			0, 0,
 			m_color_target_map.get(color_target_ids[0]).width(),
 			m_color_target_map.get(color_target_ids[0]).height()
 		};
-		renderingInfo.layerCount = 1;
-		renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
-		renderingInfo.pColorAttachments = colorAttachments.data();
-		renderingInfo.pDepthAttachment = &depthAttachment;
+		rendering_info.layerCount = 1;
+		rendering_info.colorAttachmentCount = static_cast<uint32_t>(color_attachments.size());
+		rendering_info.pColorAttachments = color_attachments.data();
+		rendering_info.pDepthAttachment = &depth_attachment;
 
-		vkCmdBeginRendering(cmd, &renderingInfo);
+		vkCmdBeginRendering(m_vk_command_buffers[m_current_frame], &rendering_info);
 	}
 
 	void RenderAPI::endRendering()
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdEndRendering(cmd);
 	}
@@ -544,27 +542,27 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		vkEndCommandBuffer(m_vkCommandBuffers[m_currentFrame]);
+		vkEndCommandBuffer(m_vk_command_buffers[m_current_frame]);
 
 		VkSubmitInfo renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkCommandBuffer commandBuffers[] = {m_vkCommandBuffers[m_currentFrame]};
+		VkCommandBuffer commandBuffers[] = {m_vk_command_buffers[m_current_frame]};
 		renderInfo.commandBufferCount = 1;
 		renderInfo.pCommandBuffers = commandBuffers;
 
-		VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]->getVk()};
+		VkSemaphore signalSemaphores[] = {m_render_finished_semaphores[m_current_frame]->getVk()};
 		renderInfo.signalSemaphoreCount = 1;
 		renderInfo.pSignalSemaphores = signalSemaphores;
 
-		m_device.graphicsQueue().submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
+		m_device.graphicsQueue().submit(1, &renderInfo, m_in_flight_fences[m_current_frame]->getVk());
 
 
 		// Now instead of rendering directly to the swap chain image, we render to the offscreen image, and then copy it to the swap chain image.
 
 		uint32_t imageIndex;
 		VkResult result = m_swapchain->acquireNextImage(
-			UINT64_MAX, m_imageAvailableSemaphores[m_currentFrame]->getVk(), VK_NULL_HANDLE, &imageIndex
+			UINT64_MAX, m_image_available_semaphores[m_current_frame]->getVk(), VK_NULL_HANDLE, &imageIndex
 		);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -584,7 +582,7 @@ namespace LIB_NAMESPACE
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
 		VkSemaphore copyImageSignalSemaphores[] = {
-			m_swapchainUpdatedSemaphores[m_currentFrame]->getVk()
+			m_swapchain_updated_semaphores[m_current_frame]->getVk()
 		};
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = copyImageSignalSemaphores;
@@ -606,7 +604,7 @@ namespace LIB_NAMESPACE
 			throw std::runtime_error("failed to present swap chain image.");
 		}
 
-		m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+		m_current_frame = (m_current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 
@@ -717,7 +715,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_map.get(pipelineID).pipeline->getVk());
 	}
@@ -731,7 +729,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdBindDescriptorSets(
 			cmd,
@@ -752,7 +750,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdPushConstants(
 			cmd,
@@ -768,7 +766,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 	}
@@ -777,7 +775,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 	}
@@ -786,7 +784,7 @@ namespace LIB_NAMESPACE
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
+		VkCommandBuffer cmd = m_vk_command_buffers[m_current_frame];
 
 		VkBuffer vertexBuffers[] = {m_mesh_map.get(meshID).vertexBuffer().buffer()};
 		VkDeviceSize offsets[] = {0};
@@ -805,7 +803,7 @@ namespace LIB_NAMESPACE
 
 	uint32_t RenderAPI::currentFrame()
 	{
-		return m_currentFrame;
+		return m_current_frame;
 	}
 
 	Mesh & RenderAPI::getMesh(uint32_t meshID)

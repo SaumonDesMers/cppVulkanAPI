@@ -86,7 +86,7 @@ namespace LIB_NAMESPACE
 		Device m_device;
 
 		std::unique_ptr<Command> m_command;
-		std::vector<VkCommandBuffer> m_vkCommandBuffers;
+		std::vector<VkCommandBuffer> m_vk_command_buffers;
 
 
 		std::unique_ptr<Swapchain> m_swapchain;
@@ -94,10 +94,10 @@ namespace LIB_NAMESPACE
 		Map<Image> m_color_target_map;
 		Map<Image> m_depth_target_map;
 
-		std::vector<std::unique_ptr<core::Semaphore>> m_imageAvailableSemaphores;
-		std::vector<std::unique_ptr<core::Semaphore>> m_renderFinishedSemaphores;
-		std::vector<std::unique_ptr<core::Semaphore>> m_swapchainUpdatedSemaphores;
-		std::vector<std::unique_ptr<core::Fence>> m_inFlightFences;
+		std::vector<std::unique_ptr<core::Semaphore>> m_image_available_semaphores;
+		std::vector<std::unique_ptr<core::Semaphore>> m_render_finished_semaphores;
+		std::vector<std::unique_ptr<core::Semaphore>> m_swapchain_updated_semaphores;
+		std::vector<std::unique_ptr<core::Fence>> m_in_flight_fences;
 
 
 		Map<Descriptor> m_descriptor_map;
@@ -111,7 +111,7 @@ namespace LIB_NAMESPACE
 		Map<UniformBuffer> m_uniform_buffer_map;
 
 
-		uint32_t m_currentFrame = 0;
+		uint32_t m_current_frame = 0;
 
 		std::mutex m_global_mutex;
 
