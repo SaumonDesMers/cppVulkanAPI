@@ -16,34 +16,31 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		typedef uint32_t ID;
-
 		struct CreateInfo
 		{
-			std::string vertexShaderPath;
-			std::string fragmentShaderPath;
+			std::string vertex_shader_path;
+			std::string fragment_shader_path;
 
-			VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+			std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+			std::vector<VkPushConstantRange> push_constant_ranges;
 
-			std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-			std::vector<VkPushConstantRange> pushConstantRanges;
+			std::vector<uint64_t> color_target_ids;
+			uint64_t depth_target_id;
 
 			void* pNext = nullptr;
 		};
 
-		static inline ID maxID = 0;
-
 		std::unique_ptr<core::PipelineLayout> layout;
 		std::unique_ptr<core::Pipeline> pipeline;
 
-		Pipeline(VkDevice device, const CreateInfo& createInfo);
+		Pipeline(VkDevice device, const CreateInfo& create_info);
 		Pipeline(const Pipeline &) = delete;
 		Pipeline(Pipeline && other);
 		~Pipeline();
 
 	private:
 
-		void createPipeline(VkDevice device, const CreateInfo& createInfo);
+		void createPipeline(VkDevice device, const CreateInfo& create_info);
 
 	};
 }

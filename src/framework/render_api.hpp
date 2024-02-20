@@ -41,32 +41,37 @@ namespace LIB_NAMESPACE
 		~RenderAPI();
 
 		uint64_t loadModel(const std::string & filename);
-		uint64_t createPipeline(Pipeline::CreateInfo & createInfo);
-		uint64_t createDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
+		uint64_t newPipeline(Pipeline::CreateInfo & createInfo);
+		uint64_t newDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
 		uint64_t loadTexture(Texture::CreateInfo & createInfo);
-		uint64_t createUniformBuffer(const UniformBuffer::CreateInfo & create_info);
+		uint64_t newUniformBuffer(const UniformBuffer::CreateInfo & create_info);
+		uint64_t newColorTarget();
+		uint64_t newDepthTarget();
 
 		// function to start recording a command buffer
 		void startDraw();
 		// function to start a render pass
-		void startRendering();
+		void startRendering(
+			const std::vector<uint64_t> & color_target_ids,
+			uint64_t depth_target_id
+		);
 		// function to do the actual drawing
-		void bindPipeline(Pipeline::ID pipelineID);
-		void drawMesh(Mesh::ID meshID);
+		void bindPipeline(uint64_t pipelineID);
+		void drawMesh(uint64_t meshID);
 		void bindDescriptor(
-			Pipeline::ID pipelineID,
+			uint64_t pipelineID,
 			uint32_t firstSet,
 			uint32_t descriptorSetCount,
 			const VkDescriptorSet *pDescriptorSets
 		);
-		void pushConstant(Pipeline::ID pipelineID, VkShaderStageFlags stageFlags, uint32_t size, const void* data);
+		void pushConstant(uint64_t pipelineID, VkShaderStageFlags stageFlags, uint32_t size, const void* data);
 		void setViewport(VkViewport& viewport);
 		void setScissor(VkRect2D& scissor);
 
 		// function to end a render pass
 		void endRendering();
 		// function to end recording a command buffer
-		void endDraw();
+		void endDraw(uint64_t color_target_id);
 
 		// temporary functions to access private members
 		GLFWwindow* getWindow();
@@ -86,8 +91,8 @@ namespace LIB_NAMESPACE
 
 		std::unique_ptr<Swapchain> m_swapchain;
 
-		std::unique_ptr<Image> m_colorImage;
-		std::unique_ptr<Image> m_depthImage;
+		Map<Image> m_color_target_map;
+		Map<Image> m_depth_target_map;
 
 		std::vector<std::unique_ptr<core::Semaphore>> m_imageAvailableSemaphores;
 		std::vector<std::unique_ptr<core::Semaphore>> m_renderFinishedSemaphores;
@@ -114,15 +119,16 @@ namespace LIB_NAMESPACE
 		void createSwapchain();
 		void recreateSwapChain();
 		void createCommandPool();
-		void createColorResources();
-		void createDepthResources();
 		void createSyncObjects();
+
+		uint64_t createColorTarget(uint64_t id = Map<Image>::no_id);
+		uint64_t createDepthTarget(uint64_t id = Map<Image>::no_id);
 
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 		VkFormat findDepthFormat();
 		bool hasStencilComponent(VkFormat format);
 
 		void generateMipmaps(VkImage image, VkFormat format, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
-		void copyRenderedImageToSwapchainImage(uint32_t swapchainImageIndex);
+		void copyRenderedImageToSwapchainImage(uint64_t color_target_id, uint32_t swapchain_image_index);
 	};
 }

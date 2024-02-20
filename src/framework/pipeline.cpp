@@ -6,9 +6,9 @@
 
 namespace LIB_NAMESPACE
 {
-	Pipeline::Pipeline(VkDevice device, const CreateInfo& createInfo)
+	Pipeline::Pipeline(VkDevice device, const CreateInfo& create_info)
 	{
-		createPipeline(device, createInfo);
+		createPipeline(device, create_info);
 	}
 
 	Pipeline::Pipeline(Pipeline && other):
@@ -21,10 +21,10 @@ namespace LIB_NAMESPACE
 	{
 	}
 
-	void Pipeline::createPipeline(VkDevice device, const CreateInfo& createInfo)
+	void Pipeline::createPipeline(VkDevice device, const CreateInfo& create_info)
 	{
-		vk::core::ShaderModule vertShaderModule(device, createInfo.vertexShaderPath);
-		vk::core::ShaderModule fragShaderModule(device, createInfo.fragmentShaderPath);
+		vk::core::ShaderModule vertShaderModule(device, create_info.vertex_shader_path);
+		vk::core::ShaderModule fragShaderModule(device, create_info.fragment_shader_path);
 
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -88,18 +88,21 @@ namespace LIB_NAMESPACE
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = createInfo.msaaSamples;
+		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 
-		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
+		std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(create_info.color_target_ids.size());
+		for (size_t i = 0; i < colorBlendAttachments.size(); i++)
+		{
+			colorBlendAttachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+			colorBlendAttachments[i].blendEnable = VK_FALSE;
+		}
 
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		colorBlending.logicOpEnable = VK_FALSE;
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &colorBlendAttachment;
+		colorBlending.attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size());
+		colorBlending.pAttachments = colorBlendAttachments.data();
 
 
 		VkPipelineDepthStencilStateCreateInfo depthStencil{};
@@ -113,10 +116,10 @@ namespace LIB_NAMESPACE
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(createInfo.descriptorSetLayouts.size());
-		pipelineLayoutInfo.pSetLayouts = createInfo.descriptorSetLayouts.data();
-		pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(createInfo.pushConstantRanges.size());
-		pipelineLayoutInfo.pPushConstantRanges = createInfo.pushConstantRanges.data();
+		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(create_info.descriptor_set_layouts.size());
+		pipelineLayoutInfo.pSetLayouts = create_info.descriptor_set_layouts.data();
+		pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(create_info.push_constant_ranges.size());
+		pipelineLayoutInfo.pPushConstantRanges = create_info.push_constant_ranges.data();
 
 
 		layout = std::make_unique<vk::core::PipelineLayout>(device, pipelineLayoutInfo);
@@ -136,7 +139,7 @@ namespace LIB_NAMESPACE
 		pipelineInfo.layout = layout->getVk();
 		pipelineInfo.renderPass = VK_NULL_HANDLE;
 		pipelineInfo.subpass = 0;
-		pipelineInfo.pNext = createInfo.pNext;
+		pipelineInfo.pNext = create_info.pNext;
 
 		pipeline = std::make_unique<vk::core::Pipeline>(device, pipelineInfo);
 	}

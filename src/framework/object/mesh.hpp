@@ -14,8 +14,6 @@ namespace LIB_NAMESPACE
     
     public:
 
-		typedef uint32_t ID;
-
 		struct CreateInfo
 		{
 			std::vector<Vertex> vertices;
@@ -28,8 +26,10 @@ namespace LIB_NAMESPACE
 			Command& command,
 			CreateInfo& meshInfo
 		);
-		Mesh(const Mesh &) = delete;
+		Mesh(const Mesh & other) = delete;
 		Mesh(Mesh && other);
+		Mesh & operator=(const Mesh & other) = delete;
+		Mesh & operator=(Mesh && other) = delete;
 		~Mesh();
 
 		inline Buffer& vertexBuffer() { return *m_vertexBuffer; }

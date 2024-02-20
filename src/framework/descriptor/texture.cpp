@@ -183,7 +183,7 @@ namespace LIB_NAMESPACE
 
 		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
-		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		descriptorInfo.descriptor_count = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 		m_descriptor = std::make_unique<Descriptor>(device, descriptorInfo);
 

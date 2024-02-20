@@ -15,8 +15,6 @@ namespace LIB_NAMESPACE
 
 	public:
 
-		typedef uint32_t ID;
-
 		struct CreateInfo
 		{
 			std::string filepath;
@@ -30,8 +28,10 @@ namespace LIB_NAMESPACE
 			Command& command,
 			CreateInfo& createInfo
 		);
-		Texture(const Texture&) = delete;
+		Texture(const Texture & other) = delete;
 		Texture(Texture && other);
+		Texture & operator=(const Texture & other) = delete;
+		Texture & operator=(Texture && other) = delete;
 		~Texture();
 
 		Image& image() const { return *m_image.get(); }

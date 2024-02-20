@@ -19,8 +19,10 @@ namespace LIB_NAMESPACE
 			VkBufferCreateInfo bufferInfo,
 			VkMemoryPropertyFlags properties
 		);
-		Buffer(const Buffer&) = delete;
-		Buffer(Buffer&&);
+		Buffer(const Buffer &) = delete;
+		Buffer(Buffer && other);
+		Buffer & operator=(const Buffer &) = delete;
+		Buffer & operator=(Buffer && other) = delete;
 		~Buffer();
 
 		VkBuffer buffer() { return m_buffer.getVk(); }

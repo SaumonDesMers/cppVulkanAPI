@@ -19,8 +19,6 @@ namespace LIB_NAMESPACE
 	{
 		createCommandPool();
 		createSwapchain();
-		createColorResources();
-		createDepthResources();
 		createSyncObjects();
 	}
 
@@ -64,13 +62,17 @@ namespace LIB_NAMESPACE
 
 		m_device.device().waitIdle();
 
-		m_colorImage.reset();
-		m_depthImage.reset();
 		m_swapchain.reset();
-
 		createSwapchain();
-		createColorResources();
-		createDepthResources();
+
+		for (auto& color_target : m_color_target_map)
+		{
+			createColorTarget(color_target.first);
+		}
+		for (auto& depth_target : m_depth_target_map)
+		{
+			createDepthTarget(depth_target.first);
+		}
 	}
 
 	void RenderAPI::createCommandPool()
@@ -87,29 +89,6 @@ namespace LIB_NAMESPACE
 		{
 			m_vkCommandBuffers[i] = m_command->allocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		}
-	}
-
-	void RenderAPI::createColorResources()
-	{
-		m_colorImage = std::make_unique<Image>(Image::createColorImage(
-			m_device.device().getVk(),
-			m_device.physicalDevice().getVk(),
-			m_swapchain->extent(),
-			m_swapchain->imageFormat()
-		));
-
-	}
-
-	void RenderAPI::createDepthResources()
-	{
-		VkFormat depthFormat = findDepthFormat();
-
-		m_depthImage = std::make_unique<Image>(Image::createDepthImage(
-			m_device.device().getVk(),
-			m_device.physicalDevice().getVk(),
-			m_swapchain->extent(),
-			depthFormat
-		));
 	}
 
 	void RenderAPI::createSyncObjects()
@@ -132,6 +111,77 @@ namespace LIB_NAMESPACE
 			m_inFlightFences[i] = std::make_unique<core::Fence>(m_device.device().getVk(), fenceInfo);
 		}
 
+	}
+
+
+	uint64_t RenderAPI::createColorTarget(uint64_t id)
+	{
+		uint64_t color_target_id = id;
+
+		Image color_target = Image::createColorImage(
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
+			m_swapchain->extent(),
+			VK_FORMAT_R16G16B16A16_SFLOAT
+		);
+
+		if (color_target_id == Map<Image>::no_id)
+		{
+			color_target_id = m_color_target_map.insert(std::move(color_target));
+		}
+		else
+		{
+			m_color_target_map.replace(color_target_id, std::move(color_target));
+		}
+
+		m_command->transitionImageLayout(
+			m_color_target_map.get(color_target_id).image(),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			1,
+			0,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+		);
+
+		return color_target_id;
+	}
+
+	uint64_t RenderAPI::createDepthTarget(uint64_t id)
+	{
+		uint64_t depth_target_id = id;
+
+		Image depth_target = Image::createDepthImage(
+			m_device.device().getVk(),
+			m_device.physicalDevice().getVk(),
+			m_swapchain->extent(),
+			findDepthFormat()
+		);
+
+		if (depth_target_id == Map<Image>::no_id)
+		{
+			depth_target_id = m_depth_target_map.insert(std::move(depth_target));
+		}
+		else
+		{
+			m_depth_target_map.replace(depth_target_id, std::move(depth_target));
+		}
+
+		m_command->transitionImageLayout(
+			m_depth_target_map.get(depth_target_id).image(),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_ASPECT_DEPTH_BIT,
+			1,
+			0,
+			VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+		);
+
+		return depth_target_id;
 	}
 
 
@@ -283,12 +333,13 @@ namespace LIB_NAMESPACE
 		m_command->endSingleTimeCommands(commandBuffer);
 	}
 
-	void RenderAPI::copyRenderedImageToSwapchainImage(uint32_t swapchainImageIndex)
+	void RenderAPI::copyRenderedImageToSwapchainImage(uint64_t color_target_id, uint32_t swapchain_image_index)
 	{
+		Image & target_image = m_color_target_map.get(color_target_id);
 
 		// First, we need to transition the swap chain image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL layout, so we can copy the offscreen image to it.
 		m_command->transitionImageLayout(
-			m_swapchain->image(swapchainImageIndex),
+			m_swapchain->image(swapchain_image_index),
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -299,6 +350,19 @@ namespace LIB_NAMESPACE
 			VK_PIPELINE_STAGE_TRANSFER_BIT
 		);
 
+		// Then we need to transition the offscreen image to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL layout, so we can copy it to the swap chain image.
+		m_command->transitionImageLayout(
+			target_image.image(),
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			1,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			0,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+		);
+
 		// The offscreen image is allready in VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL layout, so we can copy it to the swap chain image.
 		VkCommandBuffer commandBuffer = m_command->beginSingleTimeCommands();
 
@@ -306,8 +370,8 @@ namespace LIB_NAMESPACE
 		VkImageBlit blit{};
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {
-			static_cast<int32_t>(m_colorImage->width()),
-			static_cast<int32_t>(m_colorImage->height()),
+			static_cast<int32_t>(target_image.width()),
+			static_cast<int32_t>(target_image.height()),
 			1
 		};
 		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -328,9 +392,9 @@ namespace LIB_NAMESPACE
 
 		vkCmdBlitImage(
 			commandBuffer,
-			m_colorImage->image(),
+			target_image.image(),
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			m_swapchain->image(swapchainImageIndex),
+			m_swapchain->image(swapchain_image_index),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
 			&blit,
@@ -373,7 +437,7 @@ namespace LIB_NAMESPACE
 
 		// Now we need to transition the swap chain image to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR layout, so we can present it.
 		m_command->transitionImageLayout(
-			m_swapchain->image(swapchainImageIndex),
+			m_swapchain->image(swapchain_image_index),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -382,6 +446,19 @@ namespace LIB_NAMESPACE
 			0,
 			VK_PIPELINE_STAGE_TRANSFER_BIT,
 			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+		);
+
+		// And we need to transition the offscreen image back to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL layout, so we can render to it again.
+		m_command->transitionImageLayout(
+			target_image.image(),
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			1,
+			0,
+			0,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		);
 	}
 
@@ -402,48 +479,53 @@ namespace LIB_NAMESPACE
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
 		vkBeginCommandBuffer(cmd, &beginInfo);
-
-		m_command->transitionImageLayout(
-			m_colorImage->image(),
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			1,
-			0,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-		);
 	}
 
-	void RenderAPI::startRendering()
+	void RenderAPI::startRendering(
+		const std::vector<uint64_t> & color_target_ids,
+		uint64_t depth_target_id
+	)
 	{
+		#ifndef NDEBUG
+			if (color_target_ids.size() == 0)
+			{
+				throw std::runtime_error("Cannot start rendering without color target.");
+			}
+		#endif
+
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
 
-		VkRenderingAttachmentInfo colorAttachment{};
-		colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		colorAttachment.imageView = m_colorImage->view();
-		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
+		std::vector<VkRenderingAttachmentInfo> colorAttachments(color_target_ids.size());
+		for (size_t i = 0; i < color_target_ids.size(); i++)
+		{
+			colorAttachments[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+			colorAttachments[i].imageView = m_color_target_map.get(color_target_ids[i]).view();
+			colorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colorAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachments[i].clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
+		}
 
-		VkRenderingAttachmentInfo depthAttachment{};
+		VkRenderingAttachmentInfo depthAttachment = {};
 		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		depthAttachment.imageView = m_depthImage->view();
+		depthAttachment.imageView = m_depth_target_map.get(depth_target_id).view();
 		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		depthAttachment.clearValue = {1.0f, 0};
 
-		VkRenderingInfo renderingInfo{};
+		VkRenderingInfo renderingInfo = {};
 		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		renderingInfo.renderArea = {0, 0, m_colorImage->width(), m_colorImage->height()};
+		renderingInfo.renderArea = {
+			0, 0,
+			m_color_target_map.get(color_target_ids[0]).width(),
+			m_color_target_map.get(color_target_ids[0]).height()
+		};
 		renderingInfo.layerCount = 1;
-		renderingInfo.colorAttachmentCount = 1;
-		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
+		renderingInfo.pColorAttachments = colorAttachments.data();
 		renderingInfo.pDepthAttachment = &depthAttachment;
 
 		vkCmdBeginRendering(cmd, &renderingInfo);
@@ -458,25 +540,11 @@ namespace LIB_NAMESPACE
 		vkCmdEndRendering(cmd);
 	}
 
-	void RenderAPI::endDraw()
+	void RenderAPI::endDraw(uint64_t color_target_id)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkCommandBuffer cmd = m_vkCommandBuffers[m_currentFrame];
-
-		m_command->transitionImageLayout(
-			m_colorImage->image(),
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			1,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			0,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
-		);
-
-		vkEndCommandBuffer(cmd);
+		vkEndCommandBuffer(m_vkCommandBuffers[m_currentFrame]);
 
 		VkSubmitInfo renderInfo{};
 		renderInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -490,7 +558,6 @@ namespace LIB_NAMESPACE
 		renderInfo.pSignalSemaphores = signalSemaphores;
 
 		m_device.graphicsQueue().submit(1, &renderInfo, m_inFlightFences[m_currentFrame]->getVk());
-
 
 
 		// Now instead of rendering directly to the swap chain image, we render to the offscreen image, and then copy it to the swap chain image.
@@ -510,7 +577,7 @@ namespace LIB_NAMESPACE
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
-		copyRenderedImageToSwapchainImage(imageIndex);
+		copyRenderedImageToSwapchainImage(color_target_id, imageIndex);
 
 		// Finally, we present the swap chain image.
 		VkPresentInfoKHR presentInfo{};
@@ -560,13 +627,13 @@ namespace LIB_NAMESPACE
 		));
 	}
 
-	uint64_t RenderAPI::createDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
+	uint64_t RenderAPI::newDescriptor(VkDescriptorSetLayoutBinding layoutBinding)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };
-		descriptorInfo.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		descriptorInfo.descriptor_count = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 		return m_descriptor_map.insert(Descriptor(
 			m_device.device().getVk(),
@@ -596,16 +663,21 @@ namespace LIB_NAMESPACE
 		return texture_id;
 	}
 
-	uint64_t RenderAPI::createPipeline(Pipeline::CreateInfo & createInfo)
+	uint64_t RenderAPI::newPipeline(Pipeline::CreateInfo & createInfo)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
-		VkFormat colorAttachementFormat = m_colorImage->format();
+		std::vector<VkFormat> colorAttachementFormats;
+		for (auto& color_target_id : createInfo.color_target_ids)
+		{
+			colorAttachementFormats.push_back(m_color_target_map.get(color_target_id).format());
+		}
+
 		VkPipelineRenderingCreateInfo renderingInfo = {};
 		renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-		renderingInfo.colorAttachmentCount = 1;
-		renderingInfo.pColorAttachmentFormats = &colorAttachementFormat;
-		renderingInfo.depthAttachmentFormat = findDepthFormat();
+		renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachementFormats.size());
+		renderingInfo.pColorAttachmentFormats = colorAttachementFormats.data();
+		renderingInfo.depthAttachmentFormat = m_depth_target_map.get(createInfo.depth_target_id).format();
 
 		createInfo.pNext = &renderingInfo;
 
@@ -615,7 +687,7 @@ namespace LIB_NAMESPACE
 		));
 	}
 
-	uint64_t RenderAPI::createUniformBuffer(const UniformBuffer::CreateInfo & create_info)
+	uint64_t RenderAPI::newUniformBuffer(const UniformBuffer::CreateInfo & create_info)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
@@ -626,7 +698,22 @@ namespace LIB_NAMESPACE
 		));
 	}
 
-	void RenderAPI::bindPipeline(Pipeline::ID pipelineID)
+	uint64_t RenderAPI::newColorTarget()
+	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
+		return createColorTarget();
+	}
+
+	uint64_t RenderAPI::newDepthTarget()
+	{
+		std::unique_lock<std::mutex> lock(m_global_mutex);
+
+		return createDepthTarget();
+	}
+
+
+	void RenderAPI::bindPipeline(uint64_t pipelineID)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
@@ -636,7 +723,7 @@ namespace LIB_NAMESPACE
 	}
 
 	void RenderAPI::bindDescriptor(
-		Pipeline::ID pipelineID,
+		uint64_t pipelineID,
 		uint32_t firstSet,
 		uint32_t descriptorSetCount,
 		const VkDescriptorSet *pDescriptorSets
@@ -656,7 +743,12 @@ namespace LIB_NAMESPACE
 		);
 	}
 
-	void RenderAPI::pushConstant(Pipeline::ID pipelineID, VkShaderStageFlags stageFlags, uint32_t size, const void* data)
+	void RenderAPI::pushConstant(
+		uint64_t pipelineID,
+		VkShaderStageFlags stageFlags,
+		uint32_t size,
+		const void* data
+	)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
@@ -690,7 +782,7 @@ namespace LIB_NAMESPACE
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 	}
 
-	void RenderAPI::drawMesh(Mesh::ID meshID)
+	void RenderAPI::drawMesh(uint64_t meshID)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 

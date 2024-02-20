@@ -23,8 +23,10 @@ namespace LIB_NAMESPACE
 			VkMemoryPropertyFlags properties,
 			VkImageViewCreateInfo viewInfo
 		);
-		Image(const Image &) = delete;
+		Image(const Image & other) = delete;
 		Image(Image && other);
+		Image & operator=(const Image & other) = delete;
+		Image & operator=(Image && other) = delete;
 		~Image();
 
 		VkImage image() { return m_image.getVk(); }

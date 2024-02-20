@@ -25,8 +25,10 @@ namespace LIB_NAMESPACE
 			VkPhysicalDevice physicalDevice,
 			const CreateInfo & createInfo
 		);
-		UniformBuffer(const UniformBuffer &) = delete;
+		UniformBuffer(const UniformBuffer & other) = delete;
 		UniformBuffer(UniformBuffer && other);
+		UniformBuffer & operator=(const UniformBuffer & other) = delete;
+		UniformBuffer & operator=(UniformBuffer && other) = delete;
 		~UniformBuffer();
 
 		Buffer* buffer(uint32_t index) const { return m_buffers[index].get(); }

@@ -17,7 +17,7 @@ namespace LIB_NAMESPACE
 
 		Map():
 			m_map(),
-			m_next_id(0)
+			m_next_id(1)
 		{
 		}
 
@@ -39,15 +39,21 @@ namespace LIB_NAMESPACE
 		Value & get(uint64_t key) { return m_map.at(key); }
 		const Value & get(uint64_t key) const { return m_map.at(key); }
 
-		void remove(uint64_t key)
+		void remove(uint64_t key) { m_map.erase(key); }
+
+		void replace(uint64_t key, Value && value)
 		{
 			m_map.erase(key);
+			m_map.insert(std::make_pair(key, std::move(value)));
 		}
 
-		void clear()
-		{
-			m_map.clear();
-		}
+		auto begin() { return m_map.begin(); }
+		auto end() { return m_map.end(); }
+
+		auto cbegin() const { return m_map.cbegin(); }
+		auto cend() const { return m_map.cend(); }
+
+		static const uint64_t no_id = 0;
 
 	private:
 
