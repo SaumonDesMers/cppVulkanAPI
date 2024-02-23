@@ -25,10 +25,12 @@ namespace LIB_NAMESPACE
 		{
 		}
 
-		Map(Map& map) = delete;
-		Map(Map&& map) = delete;
-		Map & operator=(Map& map) = delete;
-		Map & operator=(Map&& map) = delete;
+		Map(Map & map) = delete;
+		Map(Map && map) = delete;
+		Map & operator=(Map & map) = delete;
+		Map & operator=(Map && map) = delete;
+
+		size_t size() const { return m_map.size(); }
 
 		uint64_t insert(Value && value)
 		{

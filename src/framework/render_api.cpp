@@ -59,19 +59,30 @@ namespace LIB_NAMESPACE
 			glfwGetFramebufferSize(m_device.glfwWindow, &width, &height);
 			glfwWaitEvents();
 		}
-
+		
 		m_device.device().waitIdle();
 
 		m_swapchain.reset();
 		createSwapchain();
 
+		std::vector<uint64_t> color_target_ids;
 		for (auto& color_target : m_color_target_map)
 		{
-			createColorTarget(color_target.first);
+			color_target_ids.push_back(color_target.first);
 		}
+		for (auto& color_target_id : color_target_ids)
+		{
+			createColorTarget(color_target_id);
+		}
+
+		std::vector<uint64_t> depth_target_ids;
 		for (auto& depth_target : m_depth_target_map)
 		{
-			createDepthTarget(depth_target.first);
+			depth_target_ids.push_back(depth_target.first);
+		}
+		for (auto& depth_target_id : depth_target_ids)
+		{
+			createDepthTarget(depth_target_id);
 		}
 	}
 
