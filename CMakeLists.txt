@@ -75,7 +75,7 @@ target_include_directories(${PROJECT_NAME}
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/external/glm
-		${CMAKE_CURRENT_SOURCE_DIR}/external/stb
+		${CMAKE_CURRENT_SOURCE_DIR}/external/gltf
 		${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobjloader
 
 		${CMAKE_CURRENT_SOURCE_DIR}/src
