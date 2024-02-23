@@ -650,7 +650,7 @@ namespace LIB_NAMESPACE
 		));
 	}
 
-	uint64_t RenderAPI::loadTexture(Texture::CreateInfo & createInfo)
+	uint64_t RenderAPI::newTexture(Texture::CreateInfo & create_info)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
@@ -658,7 +658,7 @@ namespace LIB_NAMESPACE
 			m_device.device().getVk(),
 			m_device.physicalDevice().getVk(),
 			*m_command.get(),
-			createInfo
+			create_info
 		));
 
 		generateMipmaps(
@@ -672,12 +672,12 @@ namespace LIB_NAMESPACE
 		return texture_id;
 	}
 
-	uint64_t RenderAPI::newPipeline(Pipeline::CreateInfo & createInfo)
+	uint64_t RenderAPI::newPipeline(Pipeline::CreateInfo & create_info)
 	{
 		std::unique_lock<std::mutex> lock(m_global_mutex);
 
 		std::vector<VkFormat> colorAttachementFormats;
-		for (auto& color_target_id : createInfo.color_target_ids)
+		for (auto& color_target_id : create_info.color_target_ids)
 		{
 			colorAttachementFormats.push_back(m_color_target_map.get(color_target_id).format());
 		}
@@ -686,13 +686,13 @@ namespace LIB_NAMESPACE
 		renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
 		renderingInfo.colorAttachmentCount = static_cast<uint32_t>(colorAttachementFormats.size());
 		renderingInfo.pColorAttachmentFormats = colorAttachementFormats.data();
-		renderingInfo.depthAttachmentFormat = m_depth_target_map.get(createInfo.depth_target_id).format();
+		renderingInfo.depthAttachmentFormat = m_depth_target_map.get(create_info.depth_target_id).format();
 
-		createInfo.pNext = &renderingInfo;
+		create_info.pNext = &renderingInfo;
 
 		return m_pipeline_map.insert(Pipeline(
 			m_device.device().getVk(),
-			createInfo
+			create_info
 		));
 	}
 

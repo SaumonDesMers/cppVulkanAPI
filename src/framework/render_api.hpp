@@ -43,7 +43,7 @@ namespace LIB_NAMESPACE
 		uint64_t loadModel(const std::string & filename);
 		uint64_t newPipeline(Pipeline::CreateInfo & createInfo);
 		uint64_t newDescriptor(VkDescriptorSetLayoutBinding layoutBinding);
-		uint64_t loadTexture(Texture::CreateInfo & createInfo);
+		uint64_t newTexture(Texture::CreateInfo & createInfo);
 		uint64_t newUniformBuffer(const UniformBuffer::CreateInfo & create_info);
 		uint64_t newColorTarget();
 		uint64_t newDepthTarget();

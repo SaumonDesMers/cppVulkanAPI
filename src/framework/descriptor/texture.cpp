@@ -1,42 +1,32 @@
 #include "texture.hpp"
 #include "framework/memory/buffer.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include <stdexcept>
 
 namespace LIB_NAMESPACE
 {
 	Texture::Texture(
 		VkDevice device,
-		VkPhysicalDevice physicalDevice,
-		Command& command,
-		CreateInfo& createInfo
-	)
+		VkPhysicalDevice physical_device,
+		Command & command,
+		CreateInfo & create_info
+	):
+		m_width(create_info.width),
+		m_height(create_info.height)
 	{
-		int texChannels;
-		stbi_uc* pixels = stbi_load(createInfo.filepath.c_str(), &m_width, &m_height, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = m_width * m_height * 4;
-
-		if (pixels == nullptr)
-		{
-			throw std::runtime_error("failed to load texture: " + createInfo.filepath);
-		}
 
 		vk::Buffer stagingBuffer = vk::Buffer::createStagingBuffer(
 			device,
-			physicalDevice,
+			physical_device,
 			imageSize
 		);
 
 		stagingBuffer.map();
-		stagingBuffer.write((void*)pixels, imageSize);
+		stagingBuffer.write((void*)create_info.data, imageSize);
 		stagingBuffer.unmap();
 
-		stbi_image_free(pixels);
-
-		createImage(device, physicalDevice, createInfo);
+		createImage(device, physical_device, create_info);
 
 		command.transitionImageLayout(
 			m_image->image(),
@@ -73,8 +63,8 @@ namespace LIB_NAMESPACE
 			&region
 		);
 
-		createSampler(device, physicalDevice, createInfo);
-		createDescriptor(device, createInfo);
+		createSampler(device, physical_device, create_info);
+		createDescriptor(device, create_info);
 	}
 
 	Texture::Texture(Texture&& other):
@@ -92,8 +82,8 @@ namespace LIB_NAMESPACE
 
 	void Texture::createImage(
 		VkDevice device,
-		VkPhysicalDevice physicalDevice,
-		CreateInfo& createInfo
+		VkPhysicalDevice physical_device,
+		CreateInfo& create_info
 	)
 	{
 		VkImageCreateInfo imageInfo{};
@@ -102,7 +92,7 @@ namespace LIB_NAMESPACE
 		imageInfo.extent.width = static_cast<uint32_t>(m_width);
 		imageInfo.extent.height = static_cast<uint32_t>(m_height);
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = createInfo.mipLevel;
+		imageInfo.mipLevels = create_info.mipLevel;
 		imageInfo.arrayLayers = 1;
 		imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -121,13 +111,13 @@ namespace LIB_NAMESPACE
 		viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = createInfo.mipLevel;
+		viewInfo.subresourceRange.levelCount = create_info.mipLevel;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
 		m_image = std::make_unique<Image>(
 			device,
-			physicalDevice,
+			physical_device,
 			imageInfo,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			viewInfo
@@ -136,8 +126,8 @@ namespace LIB_NAMESPACE
 
 	void Texture::createSampler(
 		VkDevice device,
-		VkPhysicalDevice physicalDevice,
-		CreateInfo& createInfo
+		VkPhysicalDevice physical_device,
+		CreateInfo& create_info
 	)
 	{
 		VkSamplerCreateInfo samplerInfo{};
@@ -150,7 +140,7 @@ namespace LIB_NAMESPACE
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
 		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+		vkGetPhysicalDeviceProperties(physical_device, &properties);
 
 		samplerInfo.anisotropyEnable = VK_TRUE;
 		samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
@@ -165,21 +155,21 @@ namespace LIB_NAMESPACE
 		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.mipLodBias = 0.0f;
 		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = static_cast<float>(createInfo.mipLevel);
+		samplerInfo.maxLod = static_cast<float>(create_info.mipLevel);
 
 		m_sampler = std::make_unique<vk::core::Sampler>(device, samplerInfo);
 	}
 
 	void Texture::createDescriptor(
 		VkDevice device,
-		CreateInfo& createInfo
+		CreateInfo& create_info
 	)
 	{
 		VkDescriptorSetLayoutBinding layoutBinding{};
 		layoutBinding.binding = 0;
 		layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		layoutBinding.descriptorCount = 1;
-		layoutBinding.stageFlags = createInfo.stageFlags;
+		layoutBinding.stageFlags = create_info.stageFlags;
 
 		vk::Descriptor::CreateInfo descriptorInfo{};
 		descriptorInfo.bindings = { layoutBinding };

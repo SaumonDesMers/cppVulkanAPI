@@ -17,7 +17,10 @@ namespace LIB_NAMESPACE
 
 		struct CreateInfo
 		{
-			std::string filepath;
+			const void * data;
+			int width;
+			int height;
+			VkFormat pixel_size;
 			uint32_t mipLevel = 0;
 			VkShaderStageFlags stageFlags;
 		};
